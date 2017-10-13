@@ -1,0 +1,93 @@
+* {
+	font-family: "Open Sans", "Segoe UI", Arial, sans-serif;
+	font-size: 12pt;
+	line-height: 1.5em;
+}
+
+body {
+	margin: 10px 20px;
+	background: #333;
+	color: #ddd;
+	font-weight: lighter;
+}
+
+div.date {
+	font-size: 8pt;
+	color: #999;
+}
+
+div.content {
+	margin: 1em auto;
+	text-align: justify;
+}
+
+tt, pre {
+	font-family: "Courier New", monospace;
+	background-color: #e0e0e0;
+	border: 1px solid #a0a0a0;
+	padding: 16px;
+	font-weight: normal;
+	font-style: normal;
+	line-height: 1.25em;
+}
+
+a, a:visited {
+	color: #dd3;
+	font-weight: bold;
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+a.feed, a.feed:visited {
+	margin: 1em auto;
+	color: #3dd;
+}
+
+a.title, a.title:visited {
+	font-size: 12pt;
+	color: #fff;
+}
+
+ul, ol, li {
+	margin-left: 0
+}
+
+img {
+	display: block;
+	margin: 1.0em auto 0.5em auto;
+	max-width: 100%;
+	max-height: 240px;
+	height: auto !important; 
+}
+
+span.image-title {
+	font-size: smaller;
+	margin: 2em auto; 
+}
+
+iframe, video {
+	display: block;
+	margin: 2em auto;
+	max-width: 100%;
+	width: 540px;
+	height: 280px !important; 
+}
+
+blockquote {
+	padding-left: 8px;
+	margin-left: 0;
+	margin-right: 0;
+	font-style: italic;
+	border-left: 1px solid #666;
+}
+
+hr {
+	color: #999;
+	background-color: #999;
+	height: 1px;
+	border: 0;
+	width: 60px;
+}

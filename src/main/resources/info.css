@@ -1,0 +1,7 @@
+.info {
+	-fx-font: 14px "Consolas";
+	-fx-background-color: #63f;
+	-fx-background-radius: 0;
+	-fx-border-color: transparent;
+	-fx-text-fill: #fff;
+}

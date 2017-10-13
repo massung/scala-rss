@@ -1,0 +1,8 @@
+.search {
+	-fx-font: 14px "Consolas";
+	-fx-background-color: #d33;
+	-fx-background-radius: 0;
+	-fx-border-color: transparent;
+	-fx-text-fill: #fff;
+	-fx-prompt-text-fill: #fff;
+}

@@ -1,0 +1,16 @@
+.headlines {
+	-fx-background-color: #343d46;
+}
+
+.headlines .list-cell {
+	-fx-font: 14px "Consolas";
+	-fx-background-color: #343d46;
+	-fx-border-color: transparent;
+	-fx-text-fill: #d8dee9;
+	-fx-text-overrun: ellipsis;
+}
+
+.headlines .list-cell:selected {
+	-fx-background-color: #dd3;
+	-fx-text-fill: #000;
+}
