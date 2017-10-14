@@ -13,7 +13,7 @@ import org.slf4j.{Logger, LoggerFactory}
 class Aggregator(urls: String*) {
   import Scheduler.Implicits.global
 
-  val logger = LoggerFactory getLogger classOf[Aggregator]
+  val logger = LoggerFactory getLogger "Ku"
 
   // create a cancelable for all the urls
   val readers = urls map (aggregate _)
@@ -26,7 +26,7 @@ class Aggregator(urls: String*) {
 
   // create a scheduled task that reads the given RSS feed
   def aggregate(url: String): Observable[List[Headline]] =
-    Observable.intervalAtFixedRate(0.minutes, 1.minutes)
+    Observable.intervalAtFixedRate(1.second, 1.minutes)
       .flatMap(_ => readFeed(url))
       .onErrorHandle {
         case e => logger error e.toString; List.empty
@@ -34,7 +34,7 @@ class Aggregator(urls: String*) {
 
   // download the RSS feed, add it to the feed list, and update the view
   def readFeed(url: String): Observable[List[Headline]] = {
-    Http(url).asBytes match {
+    Http(url).timeout(5000, 10000).asBytes match {
       case r if r.isRedirect => readFeed(r.location.get)
       case r if r.isSuccess => {
         val is = new ByteArrayInputStream(r.body)

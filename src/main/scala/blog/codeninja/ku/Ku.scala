@@ -13,7 +13,7 @@ object Ku extends JFXApp {
     "https://www.techrepublic.com/rssfeeds/articles/",
     "http://prospect.org/rss.xml",
     "http://www.npr.org/rss/rss.php?id=1001",
-    "http://www.newyorker.com/feed/everything",
+    "http://www.newyorker.com/feed/news",
   )
 
   // create the primary stage

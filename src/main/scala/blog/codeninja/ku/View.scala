@@ -13,6 +13,7 @@ import scalafx.beans.property.ObjectProperty
 import scalafx.collections.ObservableBuffer
 import scalafx.geometry.Insets
 import scalafx.scene.control.{Label, ListView, TextField}
+import scalafx.scene.input.KeyCode
 import scalafx.scene.layout.{BorderPane, VBox}
 
 class View(val agg: Aggregator) extends BorderPane {
@@ -23,7 +24,7 @@ class View(val agg: Aggregator) extends BorderPane {
   prefHeight = 800
 
   // search term to filter headlines through
-  val search = PublishSubject[Pattern]()
+  val search = BehaviorSubject[Pattern](Pattern.compile(""))
 
   // filter the headlines with the latest search term
   val filteredHeadlines = agg.headlines.combineLatestMap(search) {
@@ -51,6 +52,14 @@ class View(val agg: Aggregator) extends BorderPane {
 
     // open double clicked headline
     onMousePressed = { e => if (e.getClickCount > 1) open }
+
+    onKeyPressed = { e =>
+      e.code match {
+        case KeyCode.Escape => selectionModel() select null
+        case KeyCode.Enter  => open
+        case _              => ()
+      }
+    }
 
     // whenever new headlines are available, update the list
     filteredHeadlines foreach { unread =>
@@ -100,7 +109,4 @@ class View(val agg: Aggregator) extends BorderPane {
 
   // hide the preview whenever a headline is not selected
   right <== when (selected) choose preview otherwise (null: Preview)
-
-  // iniitalize the search with nothing
-  search onNext Pattern.compile("")
 }

@@ -20,9 +20,11 @@ class Preview(val headline: ObjectProperty[Headline]) extends WebView {
   // fix the size of the preview
   prefWidth = 360
 
+  var previewedHeadline: Headline = _
+
   // whenever the headline changes, update the HTML body
   headline onChange { (_, _, h) =>
-    if (h != null) {
+    if (h != null && !h.equals(previewedHeadline)) {
       val template =
         html(
           head(scalatags.Text.tags2.style(styles)),
@@ -33,6 +35,10 @@ class Preview(val headline: ObjectProperty[Headline]) extends WebView {
             div(cls := "content", raw(h.summary)),
           )
         )
+
+      // track this headline, because the selection goes away when the list
+      // updates with new headlines
+      previewedHeadline = h
 
       // write the preview html
       engine loadContent template.toString
