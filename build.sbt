@@ -8,7 +8,8 @@ scalacOptions ++= Seq("-feature", "-deprecation")
 
 libraryDependencies ++= Seq(
   "io.monix" %% "monix" % "2.3.0",
-  "org.slf4j" % "slf4j-log4j12" % "1.8.0-alpha2",
+  "ch.qos.logback" % "logback-classic" % "1.0.13",
+  "org.scalaj" %% "scalaj-http" % "2.3.0",
   "com.lihaoyi" %% "scalatags" % "0.6.7",
   "org.scalafx" %% "scalafx" % "8.0.102-R11",
   "com.rometools" % "rome" % "1.8.0",

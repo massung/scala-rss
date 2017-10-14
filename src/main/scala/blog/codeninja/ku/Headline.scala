@@ -20,7 +20,7 @@ class Headline(val feed: SyndFeed, val entry: SyndEntry) extends Comparable[Head
   val date: Date = Option(entry.getUpdatedDate) getOrElse entry.getPublishedDate
 
   // calculate the age of the headline by time
-  val age: String = {
+  def age: String = {
     val time = new DateTime(date)
     val interval = if (time.isBeforeNow) new Interval(time, DateTime.now) else new Interval(0, 0)
     val period = interval.toPeriod

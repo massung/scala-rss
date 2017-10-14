@@ -1,6 +1,6 @@
+@import url('https://fonts.googleapis.com/css?family=Roboto|Roboto+Condensed:400,700');
+
 * {
-	font-family: "Open Sans", "Segoe UI", Arial, sans-serif;
-	font-size: 12pt;
 	line-height: 1.5em;
 }
 
@@ -11,12 +11,26 @@ body {
 	font-weight: lighter;
 }
 
+div.title {
+	font-family: 'Roboto Condensed', sans-serif;
+	font-size: 14pt;
+	font-weight: bold;
+	margin-bottom: 1em;
+}
+
+div.feed {
+	font-family: 'Roboto Condensed', sans-serif;
+}
+
 div.date {
-	font-size: 8pt;
+	font-family: 'Roboto Condensed', sans-serif;
+	font-size: smaller;
 	color: #999;
 }
 
 div.content {
+	font-family: 'Roboto', sans-serif;
+	font-size: 12pt;
 	margin: 1em auto;
 	text-align: justify;
 }
@@ -31,24 +45,25 @@ tt, pre {
 	line-height: 1.25em;
 }
 
-a, a:visited {
-	color: #dd3;
-	font-weight: bold;
-	text-decoration: none;
-}
-
-a:hover {
-	text-decoration: underline;
-}
-
-a.feed, a.feed:visited {
+div.feed a, div.feed a:visited {
 	margin: 1em auto;
 	color: #3dd;
 }
 
-a.title, a.title:visited {
-	font-size: 12pt;
+div.title a, div.title a:visited {
 	color: #fff;
+}
+
+div.content a, div.content a:visited {
+	color: #dd3;
+}
+
+a {
+	text-decoration: none;
+}
+
+a:hover {
+	border-bottom: 1px solid #dd3;
 }
 
 ul, ol, li {

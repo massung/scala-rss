@@ -1,0 +1,25 @@
+/* set common scroll bar colors */
+.scroll-bar:vertical .track {
+	-fx-background-color: #333;
+	-fx-border-color: #333;
+}
+
+/* set the color of the scroll bar */
+.scroll-bar:vertical .thumb {
+    -fx-background-color: #5f666d;
+}
+
+/* stylize the vertical scroll bar */
+.scroll-bar:vertical .increment-button,
+.scroll-bar:vertical .decrement-button {
+    -fx-background-color: transparent;
+	-fx-background-radius: 0em;
+	-fx-padding: 0 10 0 0;
+}
+
+/* hide the scroll bar arrows */
+.scroll-bar .increment-arrow,
+.scroll-bar .decrement-arrow {
+	-fx-shape: " ";
+	-fx-padding: 0;
+}

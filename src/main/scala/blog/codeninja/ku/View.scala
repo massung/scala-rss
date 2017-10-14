@@ -19,7 +19,7 @@ class View(val agg: Aggregator) extends BorderPane {
   import Scheduler.Implicits.global
 
   // initial window sizing
-  prefWidth = 600
+  prefWidth = 740
   prefHeight = 800
 
   // search term to filter headlines through
