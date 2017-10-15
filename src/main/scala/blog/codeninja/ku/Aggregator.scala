@@ -5,18 +5,15 @@ import java.io.ByteArrayInputStream
 import monix.execution._
 import monix.reactive._
 import monix.reactive.subjects._
-import org.slf4j.{Logger, LoggerFactory}
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 import scalaj.http._
+import org.slf4j.{Logger, LoggerFactory}
 
 class Aggregator(urls: String*) {
   import Scheduler.Implicits.global
 
-  val logger = LoggerFactory getLogger "Ku"
-
-  // each feed is a reactive list of headlines
-  type Feed = BehaviorSubject[List[Headline]]
+  val logger = LoggerFactory getLogger "Aggregator"
 
   // create a reactive feed for each url
   val feeds = urls map {
@@ -33,7 +30,7 @@ class Aggregator(urls: String*) {
   val headlines = allFeeds map (_.flatten.sorted)
 
   // create a scheduled task that reads the given RSS feed
-  def aggregate(url: String, feed: Feed): Cancelable =
+  def aggregate(url: String, feed: BehaviorSubject[List[Headline]]): Cancelable =
     Observable.intervalAtFixedRate(1.second, 5.minutes)
       .flatMap(_ => readFeed(url))
       .foreach(feed onNext _)

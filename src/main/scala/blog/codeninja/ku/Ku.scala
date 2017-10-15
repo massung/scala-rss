@@ -24,6 +24,8 @@ object Ku extends JFXApp {
     scene = new Scene {
       root = new View(agg)
     }
+
+    onCloseRequest = { _ => Config.requestStop }
   }
 
   // load the icons for the language
