@@ -1,3 +1,7 @@
+.web-view {
+	-fx-background-color: #333;
+}
+
 /* set common scroll bar colors */
 .scroll-bar:vertical .track {
 	-fx-background-color: #333;

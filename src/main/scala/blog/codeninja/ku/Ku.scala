@@ -9,7 +9,7 @@ object Ku extends JFXApp {
   val agg = new Aggregator(
     "http://digg.com/rss/top.rss",
     "http://www.engadget.com/rss.xml",
-    "http://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml",
+    "http://feeds.feedburner.com/NewshourHeadlines",
     "https://www.techrepublic.com/rssfeeds/articles/",
     "http://prospect.org/rss.xml",
     "http://www.npr.org/rss/rss.php?id=1001",

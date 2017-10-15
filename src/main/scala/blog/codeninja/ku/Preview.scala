@@ -2,6 +2,8 @@ package blog.codeninja.ku
 
 import java.awt.Desktop
 import java.net.URI
+import monix.eval._
+import monix.execution._
 import netscape.javascript.JSObject
 import org.w3c.dom.html.HTMLAnchorElement
 import scala.io.Source
@@ -12,6 +14,9 @@ import scalafx.scene.web.WebView
 import scalatags.Text.all._
 
 class Preview(val headline: ObjectProperty[Headline]) extends WebView {
+  import Scheduler.Implicits.global
+
+  // load the styles
   val styles = Source.fromFile(getClass.getResource("/preview.css").toURI).mkString
 
   // style the scrollbar and browser view
@@ -20,6 +25,7 @@ class Preview(val headline: ObjectProperty[Headline]) extends WebView {
   // fix the size of the preview
   prefWidth = 360
 
+  // keep track of the currently previewed headline
   var previewedHeadline: Headline = _
 
   // whenever the headline changes, update the HTML body
@@ -36,8 +42,7 @@ class Preview(val headline: ObjectProperty[Headline]) extends WebView {
           )
         )
 
-      // track this headline, because the selection goes away when the list
-      // updates with new headlines
+      // selection goes away when the list updates with new headlines
       previewedHeadline = h
 
       // write the preview html
@@ -61,25 +66,24 @@ class Preview(val headline: ObjectProperty[Headline]) extends WebView {
       val doc = engine.getDocument
       val nodes = doc.getElementsByTagName("a")
 
-      // loop over all the anchors in the document and add onclick event handlers
+      // loop over all the anchors and add onclick event handlers
       for (i <- 0 until nodes.getLength) {
-        nodes.item(i) match {
-          case node: HTMLAnchorElement =>
-            Option(node.getHref) foreach { href =>
-              val attr = doc.createAttribute("onclick")
+        val a = nodes.item(i).asInstanceOf[HTMLAnchorElement]
 
-              // set the link to open when clicked
-              attr.setValue(s"ku.open('$href'); return false;")
+        Option(a.getHref) foreach { href =>
+          val attr = doc.createAttribute("onclick")
 
-              // add the attribute or override the existing one
-              node.getAttributes.setNamedItem(attr)
-            }
+          // set the link to open when clicked
+          attr.setValue(s"ku.open('$href'); return false;")
+
+          // add the attribute or override the existing one
+          a.getAttributes.setNamedItem(attr)
         }
       }
 
       // create the 'ku' object that opens links in browser
       engine.executeScript("window") match {
-        case window: JSObject => window.setMember("ku", new UrlClicker())
+        case window: JSObject => window.setMember("ku", new UrlClicker)
       }
     }
   }

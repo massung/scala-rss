@@ -3,6 +3,7 @@ package blog.codeninja.ku
 import java.awt.Desktop
 import java.io.{File, PrintWriter}
 import java.nio.file._
+import monix.reactive.subjects._
 import org.json4s._
 import org.json4s.native.JsonMethods._
 import org.json4s.native.Serialization.write
@@ -20,6 +21,9 @@ object DotFile {
 
   // dot file holding preferences in json format
   val file: File = home.resolve("ku.json").toFile
+
+  // observable list of all urls that should be read
+  val urls = BehaviorSubject[List[String]](List.empty)
 
   // open the preferences file in the default editor
   def open: Unit =

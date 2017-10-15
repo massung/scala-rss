@@ -32,7 +32,7 @@ div.content {
 	font-family: 'Roboto', sans-serif;
 	font-size: 12pt;
 	margin: 1em auto;
-	text-align: justify;
+	text-align: left;
 }
 
 tt, pre {
@@ -72,7 +72,7 @@ ul, ol, li {
 
 img {
 	display: block;
-	margin: 1.0em auto 0.5em auto;
+	margin: 1.0em auto 0.5em 0;
 	max-width: 100%;
 	max-height: 240px;
 	height: auto !important; 

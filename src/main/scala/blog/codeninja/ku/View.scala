@@ -92,7 +92,7 @@ class View(val agg: Aggregator) extends BorderPane {
     padding = Insets(4)
 
     // whenever the feeds are updated, show how many, etc.
-    agg.feeds foreach { feeds =>
+    agg.allFeeds foreach { feeds =>
       Platform runLater {
         text = s"${feeds.length} feeds with ${feeds.flatten.length} headlines"
       }

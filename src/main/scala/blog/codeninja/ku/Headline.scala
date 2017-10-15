@@ -14,7 +14,7 @@ class Headline(val feed: SyndFeed, val entry: SyndEntry) extends Comparable[Head
 
   // extract the summary as html and then remove tags from it
   val description: String = Option(entry.getDescription) map (_.getValue) getOrElse ""
-  val summary: String = Jsoup.clean(description, Whitelist.basicWithImages().removeTags("a"))
+  val summary: String = Jsoup.clean(description, Whitelist.basicWithImages)
 
   // when was this headline last updated or published
   val date: Date = Option(entry.getUpdatedDate) getOrElse entry.getPublishedDate
