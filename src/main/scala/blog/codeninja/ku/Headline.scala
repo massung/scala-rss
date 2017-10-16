@@ -9,12 +9,12 @@ import org.jsoup.Jsoup
 import org.jsoup.safety.Whitelist
 
 class Headline(val feed: SyndFeed, val entry: SyndEntry) extends Comparable[Headline] {
-  // strip newlines, extra whitespace, and tags from the title
-  val title: String = Jsoup.clean(entry.getTitle.replace('\n', ' '), Whitelist.none).trim
+  val singleLine: String = entry.getTitle.replace('\n', ' ')
+  val title: String = Jsoup.parse(Jsoup.clean(singleLine, Whitelist.none)).text
 
   // extract the summary as html and then remove tags from it
   val description: String = Option(entry.getDescription) map (_.getValue) getOrElse ""
-  val summary: String = Jsoup.clean(description, Whitelist.basicWithImages)
+  val summary: String = Jsoup.clean(description, Whitelist.relaxed)
 
   // when was this headline last updated or published
   val date: Date = Option(entry.getUpdatedDate) getOrElse entry.getPublishedDate

@@ -12,7 +12,7 @@ import scalafx.application.Platform
 import scalafx.beans.property.ObjectProperty
 import scalafx.collections.ObservableBuffer
 import scalafx.geometry.Insets
-import scalafx.scene.control.{Label, ListView, TextField}
+import scalafx.scene.control.{Label, ListCell, ListView, TextField}
 import scalafx.scene.input.KeyCode
 import scalafx.scene.layout.{BorderPane, VBox}
 
@@ -50,9 +50,24 @@ class View(val agg: Aggregator) extends BorderPane {
       (_, _, h) => headline update h
     }
 
+    // custom cells to truncate overflow
+    cellFactory = { _ =>
+      val w = prefWidth
+
+      new ListCell[Headline] {
+        prefWidth <== w - 20
+        ellipsisString = "\u2026"
+
+        item.onChange { (_, _, h) =>
+          text = Option(h) map(_.toString) getOrElse null
+        }
+      }
+    }
+
     // open double clicked headline
     onMousePressed = { e => if (e.getClickCount > 1) open }
 
+    // clear selection and open browser
     onKeyPressed = { e =>
       e.code match {
         case KeyCode.Escape => selectionModel() select null

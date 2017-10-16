@@ -14,6 +14,7 @@ object Ku extends JFXApp {
     "http://prospect.org/rss.xml",
     "http://www.npr.org/rss/rss.php?id=1001",
     "http://www.newyorker.com/feed/news",
+    "https://www.theguardian.com/us/rss",
   )
 
   // create the primary stage

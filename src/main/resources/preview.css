@@ -55,7 +55,7 @@ div.title a, div.title a:visited {
 }
 
 div.content a, div.content a:visited {
-	color: #dd3;
+	color: #69c;
 }
 
 a {
@@ -67,28 +67,17 @@ a:hover {
 }
 
 ul, ol, li {
-	margin-left: 0
+	margin-left: -10px;
 }
 
-img {
+img, iframe, video {
 	display: block;
 	margin: 1.0em auto 0.5em 0;
 	max-width: 100%;
 	max-height: 240px;
-	height: auto !important; 
-}
-
-span.image-title {
-	font-size: smaller;
-	margin: 2em auto; 
-}
-
-iframe, video {
-	display: block;
-	margin: 2em auto;
-	max-width: 100%;
-	width: 540px;
-	height: 280px !important; 
+	height: auto !important;
+	border: 1px solid #ccc;
+	box-shadow: 0px 1px 3px 2px rgba(0, 0, 0, 0.5);
 }
 
 blockquote {
@@ -105,4 +94,9 @@ hr {
 	height: 1px;
 	border: 0;
 	width: 60px;
+}
+
+span.image-title {
+	font-size: smaller;
+	margin: 2em auto; 
 }

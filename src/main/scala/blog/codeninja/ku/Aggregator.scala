@@ -29,6 +29,9 @@ class Aggregator(urls: String*) {
   // all headlines are an aggregated, sorted list of all the feeds
   val headlines = allFeeds map (_.flatten.sorted)
 
+  // list of archived headlines (deleted by the user/marked as read)
+  val archive = BehaviorSubject[List[String]](List.empty)
+
   // create a scheduled task that reads the given RSS feed
   def aggregate(url: String, feed: BehaviorSubject[List[Headline]]): Cancelable =
     Observable.intervalAtFixedRate(1.second, 5.minutes)
