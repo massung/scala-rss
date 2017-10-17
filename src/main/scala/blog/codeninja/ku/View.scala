@@ -34,9 +34,6 @@ class View(val agg: Aggregator) extends BorderPane {
   // currently selected headline
   val headline = ObjectProperty[Headline](this, "headline")
 
-  // property evaluates to true when the headline is set
-  val selected = headline =!= null
-
   // launch the browser and open the current headline
   def open = Option(headline.getValue) foreach (_.open)
 
@@ -118,10 +115,10 @@ class View(val agg: Aggregator) extends BorderPane {
   val preview = new Preview(headline)
 
   // simple hack to get the info box to grow
-  top = new VBox(info) {
+  top = new VBox(new MainMenu(headline), info) {
     info.prefWidth <== width
   }
 
   // hide the preview whenever a headline is not selected
-  right <== when (selected) choose preview otherwise (null: Preview)
+  right <== when (headline =!= null) choose preview otherwise (null: Preview)
 }

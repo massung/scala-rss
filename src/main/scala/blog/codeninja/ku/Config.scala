@@ -61,7 +61,7 @@ object Config {
   home.register(service, StandardWatchEventKinds.ENTRY_MODIFY)
 
   // set to true when the watch thread should terminate
-  private var stopRequested = false
+  private var cancelRequested = false
 
   // create a thread that looks for changes to the config file
   val watch = new Thread {
@@ -73,7 +73,7 @@ object Config {
 
     // loop forever, handling all events
     override def run = {
-      while (!stopRequested) {
+      while (!cancelRequested) {
         val key = Option(service.poll(500, TimeUnit.MILLISECONDS))
 
         // loop over all the events posted looking for modifications
@@ -91,10 +91,7 @@ object Config {
   }
 
   // elegantly ask the stop thread to terminate
-  def requestStop() = stopRequested = true
-
-  // load the preferences initially
-  load
+  def cancel: Unit = cancelRequested = true
 
   // start the thread
   watch.start

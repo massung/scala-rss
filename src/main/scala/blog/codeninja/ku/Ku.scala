@@ -6,6 +6,8 @@ import scalafx.scene.image.Image
 import scalafx.scene.layout.BorderPane
 
 object Ku extends JFXApp {
+  Config.load
+
   val agg = new Aggregator(
     "http://digg.com/rss/top.rss",
     "http://www.engadget.com/rss.xml",
@@ -26,7 +28,11 @@ object Ku extends JFXApp {
       root = new View(agg)
     }
 
-    onCloseRequest = { _ => Config.requestStop }
+    // stop all background processing
+    onCloseRequest = { _ =>
+      Config.cancel
+      agg.cancel
+    }
   }
 
   // load the icons for the language
