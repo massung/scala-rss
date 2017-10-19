@@ -20,6 +20,10 @@ class MainMenu(val headline: ObjectProperty[Headline]) extends MenuBar {
     onAction = { _ => Config.open }
   }
 
+  val findItem = new MenuItem("Find") {
+    onAction = { _ => }
+  }
+
   val aboutItem = new MenuItem("About") {
     onAction = { _ => }
   }
@@ -31,6 +35,10 @@ class MainMenu(val headline: ObjectProperty[Headline]) extends MenuBar {
 
   val editMenu = new Menu("Edit") {
     items = Seq(archiveItem, new SeparatorMenuItem, prefsItem)
+  }
+
+  val searchMenu = new Menu("Search") {
+    items = Seq(findItem, new SeparatorMenuItem)
   }
 
   val helpMenu = new Menu("Help") {

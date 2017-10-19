@@ -5,6 +5,7 @@ import java.net.URI
 import java.util.regex.Pattern
 import monix.eval._
 import monix.execution._
+import monix.reactive._
 import monix.reactive.subjects._
 import scala.collection.JavaConverters._
 import scalafx.Includes._
@@ -16,7 +17,7 @@ import scalafx.scene.control.{Label, ListCell, ListView, TextField}
 import scalafx.scene.input.KeyCode
 import scalafx.scene.layout.{BorderPane, VBox}
 
-class View(val agg: Aggregator) extends BorderPane {
+class View(val agg: Observable[Aggregator]) extends BorderPane {
   import Scheduler.Implicits.global
 
   // initial window sizing
@@ -27,8 +28,10 @@ class View(val agg: Aggregator) extends BorderPane {
   val search = BehaviorSubject[Pattern](Pattern.compile(""))
 
   // filter the headlines with the latest search term
-  val filteredHeadlines = agg.headlines.combineLatestMap(search) {
-    (unread, s) => unread filter { h => s.matcher(h.title).find }
+  val filteredHeadlines = agg flatMap { agg =>
+    agg.headlines.combineLatestMap(search) {
+      (unread, s) => unread filter { h => s.matcher(h.title).find }
+    }
   }
 
   // currently selected headline
@@ -38,7 +41,7 @@ class View(val agg: Aggregator) extends BorderPane {
   def open = Option(headline.getValue) foreach (_.open)
 
   // create the content body list of all headlines
-  center = new ListView[Headline] {
+  val list = new ListView[Headline] {
     styleClass = Seq("headlines")
     stylesheets = Seq("/headlines.css", "/scrollbar.css")
 
@@ -72,14 +75,33 @@ class View(val agg: Aggregator) extends BorderPane {
         case _              => ()
       }
     }
+  }
 
-    // whenever new headlines are available, update the list
-    filteredHeadlines foreach { unread =>
-      Platform runLater {
-        items = ObservableBuffer(unread)
-      }
+  // whenever new aggregator updates headlines, update the list
+  var update = filteredHeadlines foreach { unread =>
+    Platform runLater {
+      list.items = ObservableBuffer(unread)
     }
   }
+
+  // label showing number of headlines, feeds, etc.
+  val info = new Label("") {
+    styleClass = Seq("info")
+    stylesheets = Seq("/info.css")
+
+    padding = Insets(4)
+  }
+
+  // create a preview that updates whenever the selected headline changes
+  val preview = new Preview(headline)
+
+  // simple hack to get the info box to grow
+  top = new VBox(new MainMenu(headline), info) {
+    info.prefWidth <== width
+  }
+
+  // main body contains headlines
+  center = list
 
   // search bar at the bottom
   bottom = new TextField {
@@ -94,29 +116,6 @@ class View(val agg: Aggregator) extends BorderPane {
     text.onChange { (_, _, s) =>
       search onNext Pattern.compile(Pattern.quote(s), Pattern.CASE_INSENSITIVE)
     }
-  }
-
-  // label showing number of headlines, feeds, etc.
-  val info = new Label("Fetching headlines...") {
-    styleClass = Seq("info")
-    stylesheets = Seq("/info.css")
-
-    padding = Insets(4)
-
-    // whenever the feeds are updated, show how many, etc.
-    agg.allFeeds foreach { feeds =>
-      Platform runLater {
-        text = s"${feeds.length} feeds with ${feeds.flatten.length} headlines"
-      }
-    }
-  }
-
-  // create a preview that updates whenever the selected headline changes
-  val preview = new Preview(headline)
-
-  // simple hack to get the info box to grow
-  top = new VBox(new MainMenu(headline), info) {
-    info.prefWidth <== width
   }
 
   // hide the preview whenever a headline is not selected
