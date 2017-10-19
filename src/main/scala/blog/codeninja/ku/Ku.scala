@@ -1,13 +1,22 @@
 package blog.codeninja.ku
 
+import monix.execution.Scheduler.Implicits.global
 import scalafx.application.JFXApp
 import scalafx.scene.Scene
 import scalafx.scene.image.Image
 import scalafx.scene.layout.BorderPane
 
 object Ku extends JFXApp {
-  Config.load
+  val agg = Config.prefs map {
+    prefs => new Aggregator(prefs.urls: _*)
+  }
 
+  // each time the aggregator changes, cancel the old one
+  val canceler = agg foreach {
+    old => Config.prefs foreach (_ => old.cancel)
+  }
+
+  /*
   val agg = new Aggregator(
     "http://digg.com/rss/top.rss",
     "http://www.engadget.com/rss.xml",
@@ -18,6 +27,7 @@ object Ku extends JFXApp {
     "http://www.newyorker.com/feed/news",
     "https://www.theguardian.com/us/rss",
   )
+  */
 
   // create the primary stage
   stage = new JFXApp.PrimaryStage {
@@ -31,8 +41,10 @@ object Ku extends JFXApp {
     // stop all background processing
     onCloseRequest = { _ =>
       Config.cancel
-      agg.cancel
     }
+
+    // load the config file
+    Config.load
   }
 
   // load the icons for the language

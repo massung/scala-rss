@@ -20,21 +20,21 @@ class Aggregator(urls: String*) {
     _ => BehaviorSubject[List[Headline]](List.empty)
   }
 
-  // create a cancelable, periodic reader for all the urls
-  val readers = (urls zip feeds) map ((aggregate _).tupled)
-
   // pull all the readers together into a single observable
   val allFeeds = Observable.combineLatestList(feeds: _*)
 
-  // all headlines are an aggregated, sorted list of all the feeds
+  // all feeds are an flattened togeter into a sorted list of headlines
   val headlines = allFeeds map (_.flatten.sorted)
+
+  // create a cancelable, periodic reader for all the urls
+  val readers = (urls zip feeds) map ((aggregate _).tupled)
 
   // stop running the aggregator
   def cancel = readers foreach (_.cancel)
 
   // create a scheduled task that reads the given RSS feed
   def aggregate(url: String, feed: BehaviorSubject[List[Headline]]): Cancelable =
-    Observable.intervalAtFixedRate(1.second, 5.minutes)
+    Observable.intervalAtFixedRate(1.second, 30.seconds)
       .flatMap(_ => readFeed(url))
       .foreach(feed onNext _)
 
@@ -43,8 +43,8 @@ class Aggregator(urls: String*) {
     Http(url).timeout(5000, 10000).asBytes match {
       case r if r.isRedirect => readFeed(r.location.get)
       case r if r.isSuccess => {
-        val is = new ByteArrayInputStream(r.body)
-        val feed = new SyndFeedInput().build(new XmlReader(is))
+        val input = new ByteArrayInputStream(r.body)
+        val feed = new SyndFeedInput().build(new XmlReader(input))
         val entries = feed.getEntries.asScala map (new Headline(feed, _))
 
         // output that this feed was parsed

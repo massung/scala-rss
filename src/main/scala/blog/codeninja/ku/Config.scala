@@ -29,7 +29,7 @@ object Config {
   val file: File = home.resolve("ku.json").toFile
 
   // observable list of all urls that should be read
-  val prefs = BehaviorSubject[Prefs](new Prefs)
+  val prefs = PublishSubject[Prefs]()
 
   // open the preferences file in the default editor
   def open: Unit =
