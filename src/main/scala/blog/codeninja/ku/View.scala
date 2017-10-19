@@ -85,18 +85,11 @@ class View(val agg: Observable[Aggregator]) extends BorderPane {
   }
 
   // label showing number of headlines, feeds, etc.
-  val info = new Label("Fetching headlines...") {
+  val info = new Label("") {
     styleClass = Seq("info")
     stylesheets = Seq("/info.css")
 
     padding = Insets(4)
-
-    // whenever the feeds are updated, show how many, etc.
-    //agg.allFeeds foreach { feeds =>
-    //  Platform runLater {
-    //    text = s"${feeds.length} feeds with ${feeds.flatten.length} headlines"
-    //  }
-    //}
   }
 
   // create a preview that updates whenever the selected headline changes

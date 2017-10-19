@@ -17,7 +17,7 @@ class Aggregator(urls: String*) {
 
   // create a reactive feed for each url
   val feeds = urls map {
-    _ => BehaviorSubject[List[Headline]](List.empty)
+    _ => PublishSubject[List[Headline]]()
   }
 
   // pull all the readers together into a single observable
@@ -33,8 +33,8 @@ class Aggregator(urls: String*) {
   def cancel = readers foreach (_.cancel)
 
   // create a scheduled task that reads the given RSS feed
-  def aggregate(url: String, feed: BehaviorSubject[List[Headline]]): Cancelable =
-    Observable.intervalAtFixedRate(1.second, 30.seconds)
+  def aggregate(url: String, feed: PublishSubject[List[Headline]]): Cancelable =
+    Observable.intervalAtFixedRate(1.second, 5.minutes)
       .flatMap(_ => readFeed(url))
       .foreach(feed onNext _)
 

@@ -1,33 +1,34 @@
 package blog.codeninja.ku
 
-import monix.execution.Scheduler.Implicits.global
+import monix.reactive._
+import monix.execution._
+import scala.concurrent.Future
 import scalafx.application.JFXApp
 import scalafx.scene.Scene
 import scalafx.scene.image.Image
 import scalafx.scene.layout.BorderPane
 
 object Ku extends JFXApp {
-  val agg = Config.prefs map {
-    prefs => new Aggregator(prefs.urls: _*)
-  }
+  import Scheduler.Implicits.global
 
-  // each time the aggregator changes, cancel the old one
-  val canceler = agg foreach {
-    old => Config.prefs foreach (_ => old.cancel)
-  }
+  val aggregator = Config.prefs map { prefs =>
+    val agg = new Aggregator(prefs.urls: _*)
 
-  /*
-  val agg = new Aggregator(
-    "http://digg.com/rss/top.rss",
-    "http://www.engadget.com/rss.xml",
-    "http://feeds.feedburner.com/NewshourHeadlines",
-    "https://www.techrepublic.com/rssfeeds/articles/",
-    "http://prospect.org/rss.xml",
-    "http://www.npr.org/rss/rss.php?id=1001",
-    "http://www.newyorker.com/feed/news",
-    "https://www.theguardian.com/us/rss",
-  )
-  */
+    Config.prefs subscribe new Observer[Config.Prefs] {
+      def onError(ex: Throwable) = agg.cancel
+      def onComplete = agg.cancel
+
+      // When the prefs change again, cancel the aggregator because
+      // a new one will be made. Also, stop watching for a new prefs
+      // update, because we'll make a new observer at that time.
+      def onNext(prefs: Config.Prefs): Future[Ack] = {
+        agg.cancel; Ack.Stop
+      }
+    }
+
+    // return the aggregator
+    agg
+  }
 
   // create the primary stage
   stage = new JFXApp.PrimaryStage {
@@ -35,12 +36,12 @@ object Ku extends JFXApp {
     minWidth = 560
 
     scene = new Scene {
-      root = new View(agg)
+      root = new View(aggregator)
     }
 
     // stop all background processing
-    onCloseRequest = { _ =>
-      Config.cancel
+    onCloseRequest = {
+      _ => Config.cancel
     }
 
     // load the config file
