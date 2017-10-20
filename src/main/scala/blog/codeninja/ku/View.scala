@@ -88,7 +88,7 @@ class View(val agg: Observable[Aggregator]) extends BorderPane {
   }
 
   // whenever new aggregator updates headlines, update the list
-  var update = filteredHeadlines foreach { unread =>
+  var update = unreadHeadlines foreach { unread =>
     Platform runLater {
       list.items = ObservableBuffer(unread)
     }
