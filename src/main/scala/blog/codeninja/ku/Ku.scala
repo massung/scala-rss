@@ -11,6 +11,7 @@ import scalafx.scene.layout.BorderPane
 object Ku extends JFXApp {
   import Scheduler.Implicits.global
 
+  // create a new aggregator whenever the preferences change
   val aggregator = Config.prefs map { prefs =>
     val agg = new Aggregator(prefs.urls: _*)
 
@@ -40,8 +41,9 @@ object Ku extends JFXApp {
     }
 
     // stop all background processing
-    onCloseRequest = {
-      _ => Config.cancel
+    onCloseRequest = { _ =>
+      Archive.onComplete
+      Config.cancel
     }
 
     // load the config file

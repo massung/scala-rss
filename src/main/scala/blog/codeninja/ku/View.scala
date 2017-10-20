@@ -27,9 +27,6 @@ class View(val agg: Observable[Aggregator]) extends BorderPane {
   // search term to filter headlines through
   val search = BehaviorSubject[Pattern](Pattern.compile(""))
 
-  // archived headlines list
-  var archive = BehaviorSubject[List[Headline]](List.empty)
-
   // filter the headlines with the latest search term
   val filteredHeadlines = agg flatMap { agg =>
     agg.headlines.combineLatestMap(search) {
@@ -38,7 +35,7 @@ class View(val agg: Observable[Aggregator]) extends BorderPane {
   }
 
   // unread headlines aren't in the archive list
-  val unreadHeadlines = filteredHeadlines.combineLatestMap(archive) {
+  val unreadHeadlines = filteredHeadlines.combineLatestMap(Archive) {
     (all, read) => all filterNot (read contains _)
   }
 
@@ -47,6 +44,9 @@ class View(val agg: Observable[Aggregator]) extends BorderPane {
 
   // launch the browser and open the current headline
   def open(): Unit = Option(headline.getValue) foreach (_.open)
+
+  // add the selected headline to the archive
+  def archive(): Unit = Option(headline.getValue) foreach (Archive onNext Push(_))
 
   // create the content body list of all headlines
   val list = new ListView[Headline] {
@@ -78,8 +78,8 @@ class View(val agg: Observable[Aggregator]) extends BorderPane {
     // clear selection and open browser
     onKeyPressed = { e =>
       e.code match {
-        case KeyCode.X      => ()
-        case KeyCode.U      => ()
+        case KeyCode.X      => archive
+        case KeyCode.U      => Archive onNext Undo()
         case KeyCode.Escape => selectionModel() select null
         case KeyCode.Enter  => open
         case _              => ()
@@ -95,7 +95,7 @@ class View(val agg: Observable[Aggregator]) extends BorderPane {
   }
 
   // label showing number of headlines, feeds, etc.
-  val info = new Label("[x] - archive headline; [u] - unarchive") {
+  val info = new Label("[ret] - open; [esc] - close; [x] - archive; [u] - unarchive") {
     styleClass = Seq("info")
     stylesheets = Seq("/info.css")
 
