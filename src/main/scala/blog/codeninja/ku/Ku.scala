@@ -13,7 +13,7 @@ object Ku extends JFXApp {
 
   // create a new aggregator whenever the preferences change
   val aggregator = Config.prefs map { prefs =>
-    val agg = new Aggregator(prefs.urls: _*)
+    val agg = new Aggregator(prefs)
 
     Config.prefs subscribe new Observer[Config.Prefs] {
       def onError(ex: Throwable) = agg.cancel

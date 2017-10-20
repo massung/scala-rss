@@ -20,6 +20,7 @@ object Config {
   // definition of the preferences file
   case class Prefs(
     val urls: List[String] = List.empty,
+    val ageLimit: Option[String] = None,
   )
 
   // home folder where the dot file is saved

@@ -1,22 +1,41 @@
 package blog.codeninja.ku
 
 import com.rometools.rome.io._
+import org.joda.time.format.PeriodFormatterBuilder
+import org.joda.time.Period
 import java.io.ByteArrayInputStream
+import java.util.Locale
 import monix.execution._
 import monix.reactive._
 import monix.reactive.subjects._
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
+import scala.util.Try
 import scalaj.http._
 import org.slf4j.{Logger, LoggerFactory}
 
-class Aggregator(urls: String*) {
+class Aggregator(prefs: Config.Prefs) {
   import Scheduler.Implicits.global
 
   val logger = LoggerFactory getLogger "Aggregator"
 
+  // parse the maximum age
+  val age = {
+    val parser = new PeriodFormatterBuilder()
+      .appendWeeks().appendSuffix("w")
+      .appendDays().appendSuffix("d")
+      .appendHours().appendSuffix("h")
+      .appendMinutes().appendSuffix("m")
+      .appendSeconds().appendSuffix("s")
+      .toFormatter()
+
+    prefs.ageLimit flatMap {
+      limit => Try(Period.parse(limit, parser)).toOption map (_.toStandardDuration)
+    }
+  }
+
   // create a reactive feed for each url
-  val feeds = urls map {
+  val feeds = prefs.urls map {
     _ => PublishSubject[List[Headline]]()
   }
 
@@ -24,13 +43,16 @@ class Aggregator(urls: String*) {
   val allFeeds = Observable.combineLatestList(feeds: _*)
 
   // all feeds are an flattened togeter into a sorted list of headlines
-  val headlines = allFeeds map (_.flatten.sorted)
+  val headlines = allFeeds map (_.flatten.sorted filterNot (tooOld _))
 
   // create a cancelable, periodic reader for all the urls
-  val readers = (urls zip feeds) map ((aggregate _).tupled)
+  val readers = (prefs.urls zip feeds) map ((aggregate _).tupled)
 
   // stop running the aggregator
   def cancel = readers foreach (_.cancel)
+
+  // true if the age of the headline exceeds the age limit in the preferences
+  def tooOld(h: Headline): Boolean = age map (h.age.toDuration isLongerThan _) getOrElse false
 
   // create a scheduled task that reads the given RSS feed
   def aggregate(url: String, feed: PublishSubject[List[Headline]]): Cancelable =

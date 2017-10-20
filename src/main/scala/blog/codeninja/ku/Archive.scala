@@ -57,7 +57,7 @@ object Archive extends Subject[ArchiveAction, List[Headline]] {
     // terminate the observer
     finalEvent = Right(true)
 
-    // write the archive to disk
+    // TODO: write the archive to disk
   }
 
   // shouldn't ever happen

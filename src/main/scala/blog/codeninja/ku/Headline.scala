@@ -4,7 +4,7 @@ import com.rometools.rome.feed.synd.{SyndEntry, SyndFeed}
 import java.awt.Desktop
 import java.net.URI
 import java.util.Date
-import org.joda.time.{DateTime, Interval}
+import org.joda.time.{DateTime, Duration, Interval}
 import org.jsoup.Jsoup
 import org.jsoup.safety.Whitelist
 
@@ -19,11 +19,20 @@ class Headline(val feed: SyndFeed, val entry: SyndEntry) extends Comparable[Head
   // when was this headline last updated or published
   val date: Date = Option(entry.getUpdatedDate) getOrElse entry.getPublishedDate
 
-  // calculate the age of the headline by time
-  def age: String = {
+  // calculate the age of the
+  def age: Interval = {
     val time = new DateTime(date)
-    val interval = if (time.isBeforeNow) new Interval(time, DateTime.now) else new Interval(0, 0)
-    val period = interval.toPeriod
+
+    if (time.isBeforeNow) {
+      new Interval(time, DateTime.now)
+    } else {
+      new Interval(0, 0)
+    }
+  }
+
+  // calculate the age of the headline by time
+  def ageString: String = {
+    val period = age.toPeriod
 
     // convert to short text
     if (period.getYears > 0) "> 1y"
@@ -39,7 +48,7 @@ class Headline(val feed: SyndFeed, val entry: SyndEntry) extends Comparable[Head
   def open = Desktop.getDesktop browse new URI(entry.getLink)
 
   // age and title of the headline
-  override def toString = s"$age - $title"
+  override def toString = s"$ageString - $title"
 
   // hash by link
   override def hashCode = entry.getLink.hashCode
