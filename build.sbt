@@ -1,4 +1,4 @@
-name := "ku"
+name := "scala-rss"
 
 version := "0.1"
 
