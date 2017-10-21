@@ -1,6 +1,6 @@
-# Ku - an RSS Aggregator in Scala
+# RSS Aggregator in Scala
 
-Ku is built using the following libraries:
+Built using the following libraries:
 
 * ScalaFX
 * Monix
