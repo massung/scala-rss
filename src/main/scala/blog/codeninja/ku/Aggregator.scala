@@ -43,7 +43,7 @@ class Aggregator(prefs: Config.Prefs) {
   val allFeeds = Observable.combineLatestList(feeds: _*)
 
   // all feeds are an flattened togeter into a sorted list of headlines
-  val headlines = allFeeds map (_.flatten.sorted filterNot (tooOld _))
+  val headlines = allFeeds map (_.flatten.sorted filterNot (isOld _))
 
   // create a cancelable, periodic reader for all the urls
   val readers = (prefs.urls zip feeds) map ((aggregate _).tupled)
@@ -52,7 +52,7 @@ class Aggregator(prefs: Config.Prefs) {
   def cancel = readers foreach (_.cancel)
 
   // true if the age of the headline exceeds the age limit in the preferences
-  def tooOld(h: Headline): Boolean = age map (h.age.toDuration isLongerThan _) getOrElse false
+  def isOld(h: Headline): Boolean = age map (h.age.toDuration isLongerThan _) getOrElse false
 
   // create a scheduled task that reads the given RSS feed
   def aggregate(url: String, feed: PublishSubject[List[Headline]]): Cancelable =
@@ -61,9 +61,10 @@ class Aggregator(prefs: Config.Prefs) {
       .foreach(feed onNext _)
 
   // download the RSS feed, add it to the feed list, and update the view
-  def readFeed(url: String): Observable[List[Headline]] = {
+  def readFeed(url: String, redirects: Int = 5): Observable[List[Headline]] = {
     Http(url).timeout(5000, 10000).asBytes match {
-      case r if r.isRedirect => readFeed(r.location.get)
+      case r if r.isRedirect && redirects > 0 =>
+        readFeed(r.location.get, redirects-1)
       case r if r.isSuccess => {
         val input = new ByteArrayInputStream(r.body)
         val feed = new SyndFeedInput().build(new XmlReader(input))
