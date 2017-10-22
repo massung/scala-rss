@@ -57,7 +57,7 @@ class Aggregator(prefs: Config.Prefs) {
   // create a scheduled task that reads the given RSS feed
   def aggregate(url: String, feed: PublishSubject[List[Headline]]): Cancelable =
     Observable.intervalAtFixedRate(1.second, 5.minutes)
-      .flatMap(_ => readFeed(url))
+      .flatMap(_ => Try(readFeed(url)) getOrElse Observable.now(List.empty))
       .foreach(feed onNext _)
 
   // download the RSS feed, add it to the feed list, and update the view
