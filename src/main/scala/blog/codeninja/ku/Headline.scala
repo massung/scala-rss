@@ -50,9 +50,6 @@ class Headline(val feed: SyndFeed, val entry: SyndEntry) extends Comparable[Head
   // age and title of the headline
   override def toString = s"$ageString - $title"
 
-  // hash by link
-  override def hashCode = entry.getLink.hashCode
-
   // headlines are the same if they point to the same link
   override def equals(obj: Any): Boolean =
     obj match {
@@ -67,4 +64,7 @@ class Headline(val feed: SyndFeed, val entry: SyndEntry) extends Comparable[Head
       case 0 => entry.getTitle compareTo h.entry.getTitle
       case c => c
     }
+
+  // hash by link
+  override def hashCode = entry.getLink.hashCode
 }

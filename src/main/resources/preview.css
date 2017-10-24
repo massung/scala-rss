@@ -67,7 +67,7 @@ a:hover {
 }
 
 ul, ol, li {
-	margin-left: -10px;
+	list-style-position: outside;
 }
 
 img, iframe, video {

@@ -1,6 +1,7 @@
 package blog.codeninja.ku
 
-import java.awt.Desktop
+import java.awt.{Desktop, Toolkit}
+import java.awt.datatransfer.StringSelection
 import java.net.URI
 import java.util.regex.Pattern
 import monix.eval._
@@ -14,7 +15,7 @@ import scalafx.beans.property.ObjectProperty
 import scalafx.collections.ObservableBuffer
 import scalafx.geometry.Insets
 import scalafx.scene.control.{Label, ListCell, ListView, TextField}
-import scalafx.scene.input.KeyCode
+import scalafx.scene.input.{KeyCode, KeyEvent}
 import scalafx.scene.layout.{BorderPane, VBox}
 
 class View(val agg: Observable[Aggregator]) extends BorderPane {
@@ -45,8 +46,45 @@ class View(val agg: Observable[Aggregator]) extends BorderPane {
   // launch the browser and open the current headline
   def open(): Unit = Option(headline.getValue) foreach (_.open)
 
+  def copy(): Unit = Option(headline.getValue) foreach { h =>
+    val sel = new StringSelection(h.entry.getLink)
+
+    // put the link into the clipboard
+    Toolkit.getDefaultToolkit.getSystemClipboard.setContents(sel, null)
+  }
+
   // add the selected headline to the archive
-  def archive(): Unit = Option(headline.getValue) foreach (Archive onNext Push(_))
+  def archive(next: Boolean = true): Unit = Option(headline.getValue) foreach { h =>
+    val model = list.selectionModel()
+
+    // move the selection
+    if (next) {
+      model.selectNext; if (model.isEmpty) {
+        model.selectPrevious
+      }
+    } else {
+      model.selectPrevious; if (model.isEmpty) {
+        model.selectNext
+      }
+    }
+
+    // archive the original selection
+    Archive onNext Push(h)
+  }
+
+  // undo the previous archive action and select it
+  def undoArchive(): Unit = Archive onNext Undo()
+
+  // shared event handler for controls
+  def onKey(e: KeyEvent): Unit =
+    e.code match {
+      case KeyCode.X | KeyCode.Delete => archive(!e.shiftDown)
+      case KeyCode.U                  => undoArchive
+      case KeyCode.C                  => copy
+      case KeyCode.Escape             => list.selectionModel() select null
+      case KeyCode.Enter              => open
+      case _                          => ()
+    }
 
   // create the content body list of all headlines
   val list = new ListView[Headline] {
@@ -73,18 +111,12 @@ class View(val agg: Observable[Aggregator]) extends BorderPane {
     }
 
     // open double clicked headline
-    onMousePressed = { e => if (e.getClickCount > 1) open }
+    onMousePressed = {
+      e => if (e.getClickCount > 1) open
+    }
 
     // clear selection and open browser
-    onKeyPressed = { e =>
-      e.code match {
-        case KeyCode.X      => archive
-        case KeyCode.U      => Archive onNext Undo()
-        case KeyCode.Escape => selectionModel() select null
-        case KeyCode.Enter  => open
-        case _              => ()
-      }
-    }
+    onKeyPressed = onKey
   }
 
   // whenever new aggregator updates headlines, update the list
@@ -95,7 +127,7 @@ class View(val agg: Observable[Aggregator]) extends BorderPane {
   }
 
   // label showing number of headlines, feeds, etc.
-  val info = new Label("[ret] - open; [esc] - close; [x] - archive; [u] - unarchive") {
+  val info = new Label("[ret] - open; [esc] - close; [c] - copy link; [x] - archive; [u] - unarchive") {
     styleClass = Seq("info")
     stylesheets = Seq("/info.css")
 
@@ -103,7 +135,9 @@ class View(val agg: Observable[Aggregator]) extends BorderPane {
   }
 
   // create a preview that updates whenever the selected headline changes
-  val preview = new Preview(headline)
+  val preview = new Preview(headline) {
+    onKeyPressed = onKey
+  }
 
   // simple hack to get the info box to grow
   top = new VBox(new MainMenu(headline), info) {
