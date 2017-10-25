@@ -68,16 +68,19 @@ class Preview(val headline: ObjectProperty[Headline]) extends WebView {
 
       // loop over all the anchors and add onclick event handlers
       for (i <- 0 until nodes.getLength) {
-        val a = nodes.item(i).asInstanceOf[HTMLAnchorElement]
+        nodes.item(i) match {
+          case a: HTMLAnchorElement => Option(a.getHref) foreach { href =>
+            val attr = doc.createAttribute("onclick")
 
-        Option(a.getHref) foreach { href =>
-          val attr = doc.createAttribute("onclick")
+            // set the link to open when clicked
+            attr.setValue(s"ku.open('$href'); return false;")
 
-          // set the link to open when clicked
-          attr.setValue(s"ku.open('$href'); return false;")
+            // add the attribute or override the existing one
+            a.getAttributes.setNamedItem(attr)
+          }
 
-          // add the attribute or override the existing one
-          a.getAttributes.setNamedItem(attr)
+          // shouldn't happen, but sometimes does
+          case _ => ()
         }
       }
 
