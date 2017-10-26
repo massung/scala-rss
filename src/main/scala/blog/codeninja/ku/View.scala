@@ -75,12 +75,16 @@ class View(val agg: Observable[Aggregator]) extends BorderPane {
   // undo the previous archive action and select it
   def undoArchive(): Unit = Archive onNext Undo()
 
+  // set the focus to the search field
+  def doSearch(): Unit = searchField.requestFocus
+
   // shared event handler for controls
   def onKey(e: KeyEvent): Unit =
     e.code match {
       case KeyCode.X | KeyCode.Delete => archive(!e.shiftDown)
       case KeyCode.U                  => undoArchive
       case KeyCode.C                  => copy
+      case KeyCode.Slash              => doSearch
       case KeyCode.Escape             => list.selectionModel() select null
       case KeyCode.Enter              => open
       case _                          => ()
@@ -139,16 +143,8 @@ class View(val agg: Observable[Aggregator]) extends BorderPane {
     onKeyPressed = onKey
   }
 
-  // simple hack to get the info box to grow
-  top = new VBox(new MainMenu(headline), info) {
-    info.prefWidth <== width
-  }
-
-  // main body contains headlines
-  center = list
-
-  // search bar at the bottom
-  bottom = new TextField {
+  // field for filtering by title
+  val searchField = new TextField {
     styleClass = Seq("search")
     stylesheets = Seq("/search.css")
 
@@ -161,6 +157,17 @@ class View(val agg: Observable[Aggregator]) extends BorderPane {
       search onNext Pattern.compile(Pattern.quote(s), Pattern.CASE_INSENSITIVE)
     }
   }
+
+  // simple hack to get the info box to grow
+  top = new VBox(new MainMenu(headline), info) {
+    info.prefWidth <== width
+  }
+
+  // main body contains headlines
+  center = list
+
+  // search bar at the bottom
+  bottom = searchField
 
   // hide the preview whenever a headline is not selected
   right <== when (headline =!= null) choose preview otherwise (null: Preview)
