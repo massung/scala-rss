@@ -76,10 +76,10 @@ class View(val agg: Observable[Aggregator]) extends BorderPane {
   def undoArchive(): Unit = Archive onNext Undo()
 
   // set the focus to the search field
-  def doSearch(): Unit = searchField.requestFocus
+  def doSearch(): Unit = Platform runLater { searchField.requestFocus }
 
   // shared event handler for controls
-  def onKey(e: KeyEvent): Unit =
+  def onKey(e: KeyEvent): Unit = {
     e.code match {
       case KeyCode.X | KeyCode.Delete => archive(!e.shiftDown)
       case KeyCode.U                  => undoArchive
@@ -89,6 +89,7 @@ class View(val agg: Observable[Aggregator]) extends BorderPane {
       case KeyCode.Enter              => open
       case _                          => ()
     }
+  }
 
   // create the content body list of all headlines
   val list = new ListView[Headline] {

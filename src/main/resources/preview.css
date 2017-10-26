@@ -35,6 +35,23 @@ div.content {
 	text-align: left;
 }
 
+h1, h2, h3, h4, h5, h6 {
+	font-family: 'Roboto Condensed', sans-serif;
+	font-weight: bold;
+}
+
+h1, h2 {
+	font-size: 14pt;
+}
+
+h3, h4 {
+	font-size: 13pt;
+}
+
+h5, h6 {
+	font-size: 12pt;
+}
+
 tt, pre {
 	font-family: "Courier New", monospace;
 	background-color: #e0e0e0;
