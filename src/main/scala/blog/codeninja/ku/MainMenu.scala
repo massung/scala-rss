@@ -1,19 +1,32 @@
 package blog.codeninja.ku
 
-import scalafx.beans.property.ObjectProperty
 import scalafx.scene.control.{Menu, MenuBar, MenuItem, SeparatorMenuItem}
+import scalafx.scene.input.KeyCombination
 
-class MainMenu(val headline: ObjectProperty[Headline]) extends MenuBar {
+class MainMenu(val view: View) extends MenuBar {
   val quitItem = new MenuItem("Quit") {
-    onAction = { _ => }
+    onAction = { _ => Ku.quit }
+  }
+
+  // open the headline selected in the browser
+  val openItem = new MenuItem("Open in Browser...") {
+    onAction = { _ => view.open }
+    accelerator = KeyCombination.keyCombination("enter")
+    disable <== view.headline === null
   }
 
   // mark the current headline as read
   val archiveItem = new MenuItem("Archive") {
-    onAction = { _ => }
+    onAction = { _ => view.archive() }
+    accelerator = KeyCombination.keyCombination("x")
+    disable <== view.headline === null
+  }
 
-    // only enabled when there's a headline selected
-    disable <== headline === null
+  // mark the current headline as read
+  val undoArchiveItem = new MenuItem("Undo Archive") {
+    onAction = { _ => view.undoArchive() }
+    accelerator = KeyCombination.keyCombination("u")
+    disable <== view.headline === null
   }
 
   val prefsItem = new MenuItem("Preferences...") {
@@ -21,7 +34,19 @@ class MainMenu(val headline: ObjectProperty[Headline]) extends MenuBar {
   }
 
   val findItem = new MenuItem("Find") {
-    onAction = { _ => }
+    onAction = { _ => view.doSearch }
+    accelerator = KeyCombination.keyCombination("/")
+  }
+
+  val clearItem = new MenuItem("Clear") {
+    onAction = { _ => view.clear }
+    accelerator = KeyCombination.keyCombination("esc")
+  }
+
+  val copyItem = new MenuItem("Copy Link") {
+    onAction = { _ => view.copy }
+    accelerator = KeyCombination.keyCombination("c")
+    disable <== view.headline === null
   }
 
   val aboutItem = new MenuItem("About") {
@@ -30,15 +55,21 @@ class MainMenu(val headline: ObjectProperty[Headline]) extends MenuBar {
 
   //
   val fileMenu = new Menu("File") {
-    items = Seq(quitItem)
+    items = Seq(openItem, new SeparatorMenuItem,quitItem)
   }
 
   val editMenu = new Menu("Edit") {
-    items = Seq(archiveItem, new SeparatorMenuItem, prefsItem)
-  }
-
-  val searchMenu = new Menu("Search") {
-    items = Seq(findItem, new SeparatorMenuItem)
+    items = Seq(
+      copyItem,
+      new SeparatorMenuItem,
+      findItem,
+      clearItem,
+      new SeparatorMenuItem,
+      archiveItem,
+      undoArchiveItem,
+      new SeparatorMenuItem,
+      prefsItem,
+    )
   }
 
   val helpMenu = new Menu("Help") {

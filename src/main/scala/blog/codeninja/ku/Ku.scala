@@ -3,10 +3,11 @@ package blog.codeninja.ku
 import monix.reactive._
 import monix.execution._
 import scala.concurrent.Future
-import scalafx.application.JFXApp
+import scalafx.application.{JFXApp, Platform}
 import scalafx.scene.Scene
 import scalafx.scene.image.Image
 import scalafx.scene.layout.BorderPane
+import scalafx.stage.WindowEvent
 
 object Ku extends JFXApp {
   import Scheduler.Implicits.global
@@ -31,6 +32,13 @@ object Ku extends JFXApp {
     agg
   }
 
+  // shut everything down nicely and terminate the app
+  def quit = {
+    Config.cancel
+    Archive.onComplete
+    Platform.exit
+  }
+
   // create the primary stage
   stage = new JFXApp.PrimaryStage {
     title = "Ku"
@@ -41,10 +49,7 @@ object Ku extends JFXApp {
     }
 
     // stop all background processing
-    onCloseRequest = { _ =>
-      Archive.onComplete
-      Config.cancel
-    }
+    onCloseRequest = { _ => quit }
 
     // load the config file
     Config.load

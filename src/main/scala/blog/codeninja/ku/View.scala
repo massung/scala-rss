@@ -78,6 +78,15 @@ class View(val agg: Observable[Aggregator]) extends BorderPane {
   // set the focus to the search field
   def doSearch(): Unit = Platform runLater { searchField.requestFocus }
 
+  // clear the search and then preview
+  def clear: Unit = {
+    if (searchField.text.value != "") {
+      searchField.text = ""
+    } else {
+      list.selectionModel() select null
+    }
+  }
+
   // shared event handler for controls
   def onKey(e: KeyEvent): Unit = {
     e.code match {
@@ -85,7 +94,7 @@ class View(val agg: Observable[Aggregator]) extends BorderPane {
       case KeyCode.U                  => undoArchive
       case KeyCode.C                  => copy
       case KeyCode.Slash              => doSearch
-      case KeyCode.Escape             => list.selectionModel() select null
+      case KeyCode.Escape             => clear
       case KeyCode.Enter              => open
       case _                          => ()
     }
@@ -153,6 +162,16 @@ class View(val agg: Observable[Aggregator]) extends BorderPane {
     promptText = "/ to search..."
     padding = Insets(4)
 
+    // focus the list on enter
+    onAction = { _ =>
+      list.requestFocus
+
+      // select the first item if nothing is selected
+      if (headline.value == null) {
+        list.selectionModel().selectFirst
+      }
+    }
+
     // whenever the text changes, update the search regex
     text.onChange { (_, _, s) =>
       search onNext Pattern.compile(Pattern.quote(s), Pattern.CASE_INSENSITIVE)
@@ -160,7 +179,7 @@ class View(val agg: Observable[Aggregator]) extends BorderPane {
   }
 
   // simple hack to get the info box to grow
-  top = new VBox(new MainMenu(headline), info) {
+  top = new VBox(new MainMenu(this), info) {
     info.prefWidth <== width
   }
 
