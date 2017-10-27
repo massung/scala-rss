@@ -21,6 +21,7 @@ object Config {
   case class Prefs(
     val urls: List[String] = List.empty,
     val ageLimit: Option[String] = None,
+    val filters: List[String] = List.empty,
   )
 
   // home folder where the dot file is saved

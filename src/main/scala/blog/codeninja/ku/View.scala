@@ -31,7 +31,7 @@ class View(val agg: Observable[Aggregator]) extends BorderPane {
   // filter the headlines with the latest search term
   val filteredHeadlines = agg flatMap { agg =>
     agg.headlines.combineLatestMap(search) {
-      (all, s) => all filter (h => s.matcher(h.title).find)
+      (all, s) => all._2 filter (h => s.matcher(h.title).find)
     }
   }
 
@@ -46,6 +46,7 @@ class View(val agg: Observable[Aggregator]) extends BorderPane {
   // launch the browser and open the current headline
   def open(): Unit = Option(headline.getValue) foreach (_.open)
 
+  // put the link to the currently selected headline onto the clipboard
   def copy(): Unit = Option(headline.getValue) foreach { h =>
     val sel = new StringSelection(h.entry.getLink)
 
@@ -141,7 +142,7 @@ class View(val agg: Observable[Aggregator]) extends BorderPane {
   }
 
   // label showing number of headlines, feeds, etc.
-  val info = new Label("[ret] - open; [esc] - close; [c] - copy link; [x] - archive; [u] - unarchive") {
+  val info = new Label("") {
     styleClass = Seq("info")
     stylesheets = Seq("/info.css")
 
@@ -176,6 +177,11 @@ class View(val agg: Observable[Aggregator]) extends BorderPane {
     text.onChange { (_, _, s) =>
       search onNext Pattern.compile(Pattern.quote(s), Pattern.CASE_INSENSITIVE)
     }
+  }
+
+  // show preferences information
+  Config.prefs foreach { prefs =>
+    info.text = s"${prefs.urls.length} feeds, ${prefs.ageLimit}, ${prefs.filters.length} filters"
   }
 
   // simple hack to get the info box to grow

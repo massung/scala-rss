@@ -5,6 +5,7 @@ import org.joda.time.format.PeriodFormatterBuilder
 import org.joda.time.Period
 import java.io.ByteArrayInputStream
 import java.util.Locale
+import java.util.regex.Pattern
 import monix.execution._
 import monix.reactive._
 import monix.reactive.subjects._
@@ -34,6 +35,11 @@ class Aggregator(prefs: Config.Prefs) {
     }
   }
 
+  // filter patterns of headlines to hide
+  val hideFilters = prefs.filters map {
+    s => Pattern.compile(Pattern.quote(s), Pattern.CASE_INSENSITIVE)
+  }
+
   // create a reactive feed for each url
   val feeds = prefs.urls map {
     _ => PublishSubject[List[Headline]]()
@@ -43,7 +49,7 @@ class Aggregator(prefs: Config.Prefs) {
   val allFeeds = Observable.combineLatestList(feeds: _*)
 
   // all feeds are an flattened togeter into a sorted list of headlines
-  val headlines = allFeeds map (_.flatten.sorted filterNot (isOld _))
+  val headlines = allFeeds map (_.flatten.sorted.filterNot(isOld _).partition(isHidden _))
 
   // create a cancelable, periodic reader for all the urls
   val readers = (prefs.urls zip feeds) map ((aggregate _).tupled)
@@ -53,6 +59,9 @@ class Aggregator(prefs: Config.Prefs) {
 
   // true if the age of the headline exceeds the age limit in the preferences
   def isOld(h: Headline): Boolean = age map (h.age.toDuration isLongerThan _) getOrElse false
+
+  // true if this headlnie should be hidden from the user
+  def isHidden(h: Headline): Boolean = hideFilters.exists(p => p.matcher(h.title).find)
 
   // create a scheduled task that reads the given RSS feed
   def aggregate(url: String, feed: PublishSubject[List[Headline]]): Cancelable =

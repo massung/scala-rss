@@ -8,21 +8,18 @@ class MainMenu(val view: View) extends MenuBar {
     onAction = { _ => Ku.quit }
   }
 
-  // open the headline selected in the browser
   val openItem = new MenuItem("Open in Browser...") {
     onAction = { _ => view.open }
     accelerator = KeyCombination.keyCombination("enter")
     disable <== view.headline === null
   }
 
-  // mark the current headline as read
   val archiveItem = new MenuItem("Archive") {
     onAction = { _ => view.archive() }
     accelerator = KeyCombination.keyCombination("x")
     disable <== view.headline === null
   }
 
-  // mark the current headline as read
   val undoArchiveItem = new MenuItem("Undo Archive") {
     onAction = { _ => view.undoArchive() }
     accelerator = KeyCombination.keyCombination("u")
@@ -53,7 +50,6 @@ class MainMenu(val view: View) extends MenuBar {
     onAction = { _ => }
   }
 
-  //
   val fileMenu = new Menu("File") {
     items = Seq(openItem, new SeparatorMenuItem,quitItem)
   }
@@ -76,6 +72,5 @@ class MainMenu(val view: View) extends MenuBar {
     items = Seq(aboutItem)
   }
 
-  //
   menus = Seq(fileMenu, editMenu, helpMenu)
 }
