@@ -58,13 +58,13 @@ class Aggregator(prefs: Config.Prefs) {
   def cancel = readers foreach (_.cancel)
 
   // true if the age of the headline exceeds the age limit in the preferences
-  def isOld(h: Headline): Boolean = age map (h.age.toDuration isLongerThan _) getOrElse false
+  def isOld(h: Headline) = age map (h.age.toDuration isLongerThan _) getOrElse false
 
   // true if this headlnie should be hidden from the user
-  def isHidden(h: Headline): Boolean = hideFilters.exists(p => p.matcher(h.title).find)
+  def isHidden(h: Headline) = hideFilters.exists(p => p.matcher(h.title).find)
 
   // create a scheduled task that reads the given RSS feed
-  def aggregate(url: String, feed: PublishSubject[List[Headline]]): Cancelable =
+  def aggregate(url: String, feed: PublishSubject[List[Headline]]) =
     Observable.intervalAtFixedRate(1.second, 5.minutes)
       .flatMap(_ => Try(readFeed(url)) getOrElse Observable.now(List.empty))
       .foreach(feed onNext _)
