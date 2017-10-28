@@ -41,7 +41,7 @@ class MainMenu(val view: View) extends MenuBar {
   }
 
   val copyItem = new MenuItem("Copy Link") {
-    onAction = { _ => view.copy }
+    onAction = { _ => view.copy(false) }
     accelerator = KeyCombination.keyCombination("c")
     disable <== view.headline === null
   }

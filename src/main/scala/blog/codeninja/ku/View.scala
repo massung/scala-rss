@@ -47,12 +47,14 @@ class View(val agg: Observable[Aggregator]) extends BorderPane {
   def open(): Unit = Option(headline.getValue) foreach (_.open)
 
   // put the link to the currently selected headline onto the clipboard
-  def copy(): Unit = Option(headline.getValue) foreach { h =>
-    val sel = new StringSelection(h.entry.getLink)
+  def copy(full: Boolean): Unit =
+    Option(headline.getValue) foreach { h =>
+      val text = if (!full) h.entry.getLink else ""
+      val sel = new StringSelection(text)
 
-    // put the link into the clipboard
-    Toolkit.getDefaultToolkit.getSystemClipboard.setContents(sel, null)
-  }
+      // put the link into the clipboard
+      Toolkit.getDefaultToolkit.getSystemClipboard.setContents(sel, null)
+    }
 
   // add the selected headline to the archive
   def archive(next: Boolean = true): Unit = Option(headline.getValue) foreach { h =>
@@ -91,9 +93,10 @@ class View(val agg: Observable[Aggregator]) extends BorderPane {
   // shared event handler for controls
   def onKey(e: KeyEvent): Unit = {
     e.code match {
+      case KeyCode.P                  => Config.open
       case KeyCode.X | KeyCode.Delete => archive(!e.shiftDown)
+      case KeyCode.C                  => copy(e.controlDown)
       case KeyCode.U                  => undoArchive
-      case KeyCode.C                  => copy
       case KeyCode.Slash              => doSearch
       case KeyCode.Escape             => clear
       case KeyCode.Enter              => open
@@ -141,8 +144,11 @@ class View(val agg: Observable[Aggregator]) extends BorderPane {
     }
   }
 
+  // common info text
+  val infoText = "[\u23ce] open; [\u238b] close; [\u232b] archive; [u] undo; [/] search; [c] copy"
+
   // label showing number of headlines, feeds, etc.
-  val info = new Label("") {
+  val info = new Label(infoText) {
     styleClass = Seq("info")
     stylesheets = Seq("/info.css")
 
@@ -181,7 +187,9 @@ class View(val agg: Observable[Aggregator]) extends BorderPane {
 
   // show preferences information
   Config.prefs foreach { prefs =>
-    info.text = s"${prefs.urls.length} feeds, ${prefs.ageLimit}, ${prefs.filters.length} filters"
+    Platform runLater {
+      info.text = s"${prefs.urls.length} feeds; $infoText"
+    }
   }
 
   // simple hack to get the info box to grow
