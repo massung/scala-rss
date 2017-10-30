@@ -55,7 +55,10 @@ class Aggregator(prefs: Config.Prefs) {
   val headlines = feeds.map(_.values.flatten.toList.sorted.filterNot(isOld _).partition(isHidden _))
 
   // stop running the aggregator
-  def cancel = readers.foreach(_.cancel)
+  def cancel = {
+    subject.onComplete
+    readers.foreach(_.cancel)
+  }
 
   // true if the age of the headline exceeds the age limit in the preferences
   def isOld(h: Headline) = age.map(h.age.toDuration.isLongerThan _).getOrElse(false)

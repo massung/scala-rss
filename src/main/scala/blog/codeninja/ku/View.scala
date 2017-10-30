@@ -31,7 +31,19 @@ class View(val agg: Observable[Aggregator]) extends BorderPane {
   // filter the headlines with the latest search term
   val filteredHeadlines = agg flatMap { agg =>
     agg.headlines.combineLatestMap(search) {
-      (all, s) => all._2 filter (h => s.matcher(h.title).find)
+      case ((filtered, unread), search) =>
+        val matches = unread partition (h => search.matcher(h.title).find)
+
+        // count the total number of filtered and unread headlines
+        val totalFiltered = filtered.length + matches._2.length
+        val totalUnread = matches._1.length
+
+        // update the status bar to count headlines
+        Platform runLater {
+          info.text = s"$totalUnread headlines ($totalFiltered filtered); $infoText"
+        }
+
+        matches._1
     }
   }
 
@@ -145,7 +157,7 @@ class View(val agg: Observable[Aggregator]) extends BorderPane {
   }
 
   // common info text
-  val infoText = "[\u23ce] open; [\u238b] close; [\u232b] archive; [u] undo; [/] search; [c] copy"
+  val infoText = "[ret] open; [esc] close; [x] archive; [u] undo; [/] search; [c] copy"
 
   // label showing number of headlines, feeds, etc.
   val info = new Label(infoText) {
@@ -182,13 +194,6 @@ class View(val agg: Observable[Aggregator]) extends BorderPane {
     // whenever the text changes, update the search regex
     text.onChange { (_, _, s) =>
       search onNext Pattern.compile(Pattern.quote(s), Pattern.CASE_INSENSITIVE)
-    }
-  }
-
-  // show preferences information
-  Config.prefs foreach { prefs =>
-    Platform runLater {
-      info.text = s"${prefs.urls.length} feeds; $infoText"
     }
   }
 
