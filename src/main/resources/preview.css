@@ -120,3 +120,35 @@ span.image-title {
 	font-size: smaller;
 	margin: 2em auto; 
 }
+
+table {
+	border-spacing: 0;
+	border: 1px solid #a0a0a0;
+}
+
+tbody {
+	font-weight: lighter;
+}
+
+th {
+	font-family: 'Roboto Condensed', sans-serif;
+	font-size: 12pt;
+	font-weight: bold;
+	padding: 6px;
+	background-color: #222;
+}
+
+tr:nth-child(odd) {
+	background-color: #444;
+}
+
+td {
+	padding: 6px;
+	font-size: smaller;
+	vertical-align: text-top;
+	border-right: 1px solid #a0a0a0;
+}
+
+td:last-child {
+	border-right: none;
+}
