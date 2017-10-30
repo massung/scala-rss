@@ -7,6 +7,7 @@ import java.util.Date
 import org.joda.time.{DateTime, Duration, Interval}
 import org.jsoup.Jsoup
 import org.jsoup.safety.Whitelist
+import scala.collection.JavaConverters._
 
 class Headline(val feed: SyndFeed, val entry: SyndEntry) extends Comparable[Headline] {
   val singleLine: String = entry.getTitle.replace('\n', ' ')
@@ -18,6 +19,16 @@ class Headline(val feed: SyndFeed, val entry: SyndEntry) extends Comparable[Head
 
   // when was this headline last updated or published
   val date: Date = Option(entry.getUpdatedDate) getOrElse entry.getPublishedDate
+
+  // media enclosures (video and audio)
+  val media = entry.getEnclosures.asScala.toList
+
+  // split the media enclosures into audio and video
+  val audio = media.filter(_.getType startsWith "audio/")
+  val video = media.filter(_.getType startsWith "video/")
+
+  // unicode graphemes between the age and title
+  val delim = if (audio.length > 0 || video.length > 0) '\u25b8' else ' '
 
   // calculate the age of the
   def age: Interval = {
@@ -48,7 +59,7 @@ class Headline(val feed: SyndFeed, val entry: SyndEntry) extends Comparable[Head
   def open = Desktop.getDesktop browse new URI(entry.getLink)
 
   // age and title of the headline
-  override def toString = s"$ageString - $title"
+  override def toString = s"$ageString $delim $title"
 
   // headlines are the same if they point to the same link
   override def equals(obj: Any): Boolean =

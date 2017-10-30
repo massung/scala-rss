@@ -39,6 +39,14 @@ class Preview(val headline: ObjectProperty[Headline]) extends WebView {
             div(cls := "feed", a(href := h.feed.getLink, h.feed.getTitle)),
             div(cls := "date", h.date.toString),
             div(cls := "content", raw(h.summary)),
+            div(cls := "media",
+              for (media <- h.audio) yield {
+                div(audio(src := media.getUrl, `type` := media.getType, attr("controls") := "true"))
+              },
+              for (media <- h.video) yield {
+                div(video(src := media.getUrl, `type` := media.getType, attr("controls") := "true"))
+              },
+            )
           )
         )
 

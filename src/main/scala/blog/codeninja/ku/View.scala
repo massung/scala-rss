@@ -22,7 +22,7 @@ class View(val agg: Observable[Aggregator]) extends BorderPane {
   import Scheduler.Implicits.global
 
   // initial window sizing
-  prefWidth = 740
+  prefWidth = 860
   prefHeight = 800
 
   // search term to filter headlines through
@@ -56,7 +56,11 @@ class View(val agg: Observable[Aggregator]) extends BorderPane {
   val headline = ObjectProperty[Headline](this, "headline")
 
   // launch the browser and open the current headline
-  def open(): Unit = Option(headline.getValue) foreach (_.open)
+  def open(): Unit =
+    Option(headline.getValue) match {
+      case Some(h) => h.open
+      case None    => list.selectionModel().selectFirst
+    }
 
   // put the link to the currently selected headline onto the clipboard
   def copy(full: Boolean): Unit =
