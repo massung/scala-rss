@@ -10,7 +10,7 @@ libraryDependencies ++= Seq(
   "ch.qos.logback" % "logback-classic" % "1.0.13",
   "com.lihaoyi" %% "scalatags" % "0.6.7",
   "com.rometools" % "rome" % "1.8.0",
-  "io.monix" %% "monix" % "2.3.0",
+  "io.monix" %% "monix" % "3.0.0-M1",
   "joda-time" % "joda-time" % "2.9.9",
   "org.json4s" %% "json4s-native" % "3.5.3",
   "org.jsoup" % "jsoup" % "1.10.3",

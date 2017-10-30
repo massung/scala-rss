@@ -17,25 +17,8 @@ import scala.util.Try
 import scalaj.http._
 import org.slf4j.LoggerFactory
 
-object Aggregator {
-  sealed trait Action
-
-  // enumerated actions for the aggregator
-  final case class Aggregate(url: String, headlines: List[Headline]) extends Action
-
-  // atomic state object for subscribers, headlines, etc.
-  final case class State(
-    val archive: List[String] = List.empty,
-    val feeds: Map[String, List[Headline]] = Map.empty,
-  )
-}
-
 class Aggregator(prefs: Config.Prefs) {
   import Scheduler.Implicits.global
-  import Aggregator._
-
-  // create an initial state for the aggregator
-  private val state = Atomic(new Aggregator.State)
 
   // slf4j logger
   val logger = LoggerFactory getLogger "Aggregator"
@@ -59,25 +42,23 @@ class Aggregator(prefs: Config.Prefs) {
     s => Pattern.compile(Pattern.quote(s), Pattern.CASE_INSENSITIVE)
   }
 
-  val feeds = new ActorSubject[Aggregator.Action, Map[String, List[Headline]]](Map.empty) {
-    override def receive(old: Map[String, List[Headline]], msg: Aggregator.Action) = {
-      msg match {
-        case Aggregate(url, hs) => old + (url -> hs)
-      }
-    }
-  }
-
-  // transform the feeds downloaded into a list of sorted headlines
-  val headlines = feeds map (_.values.flatten.toList.sorted.filterNot(isOld _).partition(isHidden _))
-
-  // create a cancelable, periodic reader for all the urls
+  // create a cancelable, periodic reader for each url
   val readers = prefs.urls map (aggregate _)
 
+  // as each feed is read, it is sent to this subject
+  val subject = PublishSubject[(String, List[Headline])]()
+
+  // fold all the feeds read together
+  val feeds = subject.scan(Map[String, List[Headline]]())(_ + _)
+
+  // transform the feeds downloaded into a list of sorted headlines
+  val headlines = feeds.map(_.values.flatten.toList.sorted.filterNot(isOld _).partition(isHidden _))
+
   // stop running the aggregator
-  def cancel = readers foreach (_.cancel)
+  def cancel = readers.foreach(_.cancel)
 
   // true if the age of the headline exceeds the age limit in the preferences
-  def isOld(h: Headline) = age map (h.age.toDuration isLongerThan _) getOrElse false
+  def isOld(h: Headline) = age.map(h.age.toDuration.isLongerThan _).getOrElse(false)
 
   // true if this headlnie should be hidden from the user
   def isHidden(h: Headline) = hideFilters.exists(p => p.matcher(h.title).find)
@@ -86,7 +67,7 @@ class Aggregator(prefs: Config.Prefs) {
   def aggregate(url: String) =
     Observable.intervalAtFixedRate(1.second, 5.minutes) foreach { _ =>
       Try(readFeed(url)) match {
-        case Success(hs) => feeds onNext new Aggregator.Aggregate(url, hs)
+        case Success(hs) => subject onNext (url -> hs)
         case Failure(ex) => logger error ex.toString
       }
     }
@@ -96,7 +77,9 @@ class Aggregator(prefs: Config.Prefs) {
     Http(url).timeout(5000, 10000).asBytes match {
       case r if r.isRedirect && redirects > 0 =>
         readFeed(r.location.get, redirects-1)
-      case r if r.isSuccess => {
+      case r if !r.isSuccess =>
+        throw new Exception(r.statusLine)
+      case r =>
         val input = new ByteArrayInputStream(r.body)
         val feed = new SyndFeedInput().build(new XmlReader(input))
         val entries = feed.getEntries.asScala map (new Headline(feed, _))
@@ -106,10 +89,6 @@ class Aggregator(prefs: Config.Prefs) {
 
         // publish a new feed map with new headlines
         entries.toList
-      }
-
-      // anything else is an error
-      case r => throw new Error(r.statusLine)
     }
   }
 }
