@@ -5,6 +5,8 @@ import java.io.{File, PrintWriter}
 import java.nio.file._
 import java.util.concurrent.TimeUnit
 import monix.reactive.subjects._
+import org.joda.time.format.PeriodFormatterBuilder
+import org.joda.time.Period
 import org.json4s._
 import org.json4s.native.JsonMethods._
 import org.json4s.native.Serialization.write
@@ -22,7 +24,21 @@ object Config {
     val urls: List[String] = List.empty,
     val ageLimit: Option[String] = None,
     val filters: List[String] = List.empty,
-  )
+  ) {
+    val age = {
+      val parser = new PeriodFormatterBuilder()
+        .appendWeeks().appendSuffix("w")
+        .appendDays().appendSuffix("d")
+        .appendHours().appendSuffix("h")
+        .appendMinutes().appendSuffix("m")
+        .appendSeconds().appendSuffix("s")
+        .toFormatter()
+
+      ageLimit flatMap {
+        limit => Try(Period.parse(limit, parser)).toOption map (_.toStandardDuration)
+      }
+    }
+  }
 
   // home folder where the dot file is saved
   val home: Path = Paths.get(System getenv "USERPROFILE")

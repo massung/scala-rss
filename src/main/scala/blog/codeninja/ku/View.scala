@@ -44,7 +44,7 @@ class View(val agg: Observable[Aggregator]) extends BorderPane {
   // filter the headlines with the latest search term
   val filteredHeadlines = agg flatMap { agg =>
     agg.feeds foreach { feeds =>
-      val items = feeds map { f =>
+      val items = feeds.values map { f =>
         new RadioMenuItem(f.getTitle) {
           onAction = { _ => feedFilter onNext Some(f) }
           toggleGroup = group
@@ -62,7 +62,7 @@ class View(val agg: Observable[Aggregator]) extends BorderPane {
         (feed, headlines filter (h => feed.map(_ == h.feed) getOrElse true))
       }
       .combineLatestMap(search) { case ((feed, headlines), search) =>
-        val feedName = feed map (f => s"${f.getTitle} ") getOrElse ""
+        val feedName = feed map (f => s"${f.getTitle} - ") getOrElse ""
         val matched = headlines.filter(h => search.matcher(h.title).find)
 
         Platform runLater {
@@ -200,7 +200,7 @@ class View(val agg: Observable[Aggregator]) extends BorderPane {
 
   // create a preview that updates whenever the selected headline changes
   val preview = new Preview(headline) {
-    onKeyPressed = onKey
+    //onKeyPressed = onKey
   }
 
   // field for filtering by title
