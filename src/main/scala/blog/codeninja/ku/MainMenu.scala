@@ -68,9 +68,12 @@ class MainMenu(val view: View) extends MenuBar {
     )
   }
 
+  val viewMenu = new Menu("View") {
+  }
+
   val helpMenu = new Menu("Help") {
     items = Seq(aboutItem)
   }
 
-  menus = Seq(fileMenu, editMenu, helpMenu)
+  menus = Seq(fileMenu, editMenu, viewMenu, helpMenu)
 }

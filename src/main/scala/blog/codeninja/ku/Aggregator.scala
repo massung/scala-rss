@@ -1,5 +1,6 @@
 package blog.codeninja.ku
 
+import com.rometools.rome.feed.synd.SyndFeed
 import com.rometools.rome.io._
 import org.joda.time.format.PeriodFormatterBuilder
 import org.joda.time.Period
@@ -46,13 +47,21 @@ class Aggregator(prefs: Config.Prefs) {
   val readers = prefs.urls map (aggregate _)
 
   // as each feed is read, it is sent to this subject
-  val subject = PublishSubject[(String, List[Headline])]()
+  val subject = PublishSubject[(String, (SyndFeed, List[Headline]))]()
 
   // fold all the feeds read together
-  val feeds = subject.scan(Map[String, List[Headline]]())(_ + _)
+  val aggregatedFeeds = subject.scan(Map[String, (SyndFeed, List[Headline])]())(_ + _)
+
+  // all the feeds, but multicast as a hot observable
+  val hotFeeds = aggregatedFeeds.publishSelector(x => x)
+
+  // all the feeds, as a unique list
+  val feeds = hotFeeds.map(_.values.map(_._1).toList.sortBy(_.getTitle))
 
   // transform the feeds downloaded into a list of sorted headlines
-  val headlines = feeds.map(_.values.flatten.toList.sorted.filterNot(isOld _).partition(isHidden _))
+  val headlines = hotFeeds.map(_.values.map(_._2).flatten.toList.sorted)
+    .map(_ filterNot (isOld _))
+    .map(_ filterNot (isHidden _))
 
   // stop running the aggregator
   def cancel = {
@@ -70,13 +79,13 @@ class Aggregator(prefs: Config.Prefs) {
   def aggregate(url: String) =
     Observable.intervalAtFixedRate(1.second, 5.minutes) foreach { _ =>
       Try(readFeed(url)) match {
-        case Success(hs) => subject onNext (url -> hs)
-        case Failure(ex) => logger error ex.toString
+        case Success(feed) => subject onNext (url -> feed)
+        case Failure(ex)   => logger error s"$url ${ex.toString}"
       }
     }
 
   // download the RSS feed, add it to the feed list, and update the view
-  def readFeed(url: String, redirects: Int = 5): List[Headline] = {
+  def readFeed(url: String, redirects: Int = 5): (SyndFeed, List[Headline]) = {
     Http(url).timeout(5000, 10000).asBytes match {
       case r if r.isRedirect && redirects > 0 =>
         readFeed(r.location.get, redirects-1)
@@ -91,7 +100,7 @@ class Aggregator(prefs: Config.Prefs) {
         logger info url
 
         // publish a new feed map with new headlines
-        entries.toList
+        feed -> entries.toList
     }
   }
 }

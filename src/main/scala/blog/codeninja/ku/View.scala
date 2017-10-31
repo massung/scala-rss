@@ -1,5 +1,6 @@
 package blog.codeninja.ku
 
+import com.rometools.rome.feed.synd.SyndFeed
 import java.awt.{Desktop, Toolkit}
 import java.awt.datatransfer.StringSelection
 import java.net.URI
@@ -14,7 +15,7 @@ import scalafx.application.Platform
 import scalafx.beans.property.ObjectProperty
 import scalafx.collections.ObservableBuffer
 import scalafx.geometry.Insets
-import scalafx.scene.control.{Label, ListCell, ListView, TextField}
+import scalafx.scene.control.{Label, ListCell, ListView, RadioMenuItem, SeparatorMenuItem, TextField, ToggleGroup}
 import scalafx.scene.input.{KeyCode, KeyEvent}
 import scalafx.scene.layout.{BorderPane, VBox}
 
@@ -28,23 +29,49 @@ class View(val agg: Observable[Aggregator]) extends BorderPane {
   // search term to filter headlines through
   val search = BehaviorSubject[Pattern](Pattern.compile(""))
 
+  // filter visible headlines by the feed selected
+  val feedFilter = BehaviorSubject[Option[SyndFeed]](None)
+
+  // set the feed filter toggle group
+  val group = new ToggleGroup();
+
+  // menu item to remove the feed filter
+  val allItem = new RadioMenuItem("All") {
+    onAction = { _ => feedFilter onNext None }
+    toggleGroup = group
+  }
+
   // filter the headlines with the latest search term
   val filteredHeadlines = agg flatMap { agg =>
-    agg.headlines.combineLatestMap(search) {
-      case ((filtered, unread), search) =>
-        val matches = unread partition (h => search.matcher(h.title).find)
+    agg.feeds foreach { feeds =>
+      val items = feeds map { f =>
+        new RadioMenuItem(f.getTitle) {
+          onAction = { _ => feedFilter onNext Some(f) }
+          toggleGroup = group
+        }
+      }
 
-        // count the total number of filtered and unread headlines
-        val totalFiltered = filtered.length + matches._2.length
-        val totalUnread = matches._1.length
+      // update the view menu
+      Platform runLater {
+        menu.viewMenu.items = Seq(allItem, new SeparatorMenuItem) ++ items
+      }
+    }
 
-        // update the status bar to count headlines
+    agg.headlines
+      .combineLatestMap(feedFilter) { (headlines, feed) =>
+        (feed, headlines filter (h => feed.map(_ == h.feed) getOrElse true))
+      }
+      .combineLatestMap(search) { case ((feed, headlines), search) =>
+        val feedName = feed map (_.getTitle) getOrElse "All"
+        val matched = headlines.filter(h => search.matcher(h.title).find)
+
         Platform runLater {
-          info.text = s"$totalUnread headlines ($totalFiltered filtered); $infoText"
+          info.text = s"$feedName (${matched.length} headlines); $infoText"
         }
 
-        matches._1
-    }
+        // return only the matched headlines
+        matched
+      }
   }
 
   // unread headlines aren't in the archive list
@@ -201,8 +228,11 @@ class View(val agg: Observable[Aggregator]) extends BorderPane {
     }
   }
 
+  // create the main menu
+  val menu = new MainMenu(this)
+
   // simple hack to get the info box to grow
-  top = new VBox(new MainMenu(this), info) {
+  top = new VBox(menu, info) {
     info.prefWidth <== width
   }
 
