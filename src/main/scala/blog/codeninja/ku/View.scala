@@ -15,7 +15,7 @@ import scalafx.application.Platform
 import scalafx.beans.property.ObjectProperty
 import scalafx.collections.ObservableBuffer
 import scalafx.geometry.Insets
-import scalafx.scene.control.{Label, ListCell, ListView, RadioMenuItem, SeparatorMenuItem, TextField, ToggleGroup}
+import scalafx.scene.control.{Label, ListCell, ListView, MenuItem, SeparatorMenuItem, TextField}
 import scalafx.scene.input.{KeyCode, KeyEvent}
 import scalafx.scene.layout.{BorderPane, VBox}
 
@@ -32,22 +32,17 @@ class View(val agg: Observable[Aggregator]) extends BorderPane {
   // filter visible headlines by the feed selected
   val feedFilter = BehaviorSubject[Option[SyndFeed]](None)
 
-  // set the feed filter toggle group
-  val group = new ToggleGroup();
-
   // menu item to remove the feed filter
-  val allItem = new RadioMenuItem("All") {
+  val allItem = new MenuItem("All") {
     onAction = { _ => feedFilter onNext None }
-    toggleGroup = group
   }
 
   // filter the headlines with the latest search term
   val filteredHeadlines = agg flatMap { agg =>
     agg.feeds foreach { feeds =>
       val items = feeds.values.toSeq.sortBy(_.getTitle) map { f =>
-        new RadioMenuItem(f.getTitle) {
+        new MenuItem(f.getTitle) {
           onAction = { _ => feedFilter onNext Some(f) }
-          toggleGroup = group
         }
       }
 
