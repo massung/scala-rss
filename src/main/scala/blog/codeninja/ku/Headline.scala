@@ -55,6 +55,13 @@ class Headline(val feed: SyndFeed, val entry: SyndEntry) extends Comparable[Head
     else "< 1m"
   }
 
+  // true if this headline belongs to a given feed
+  def belongsTo(f: SyndFeed) =
+    f == feed || ((f.getUri, feed.getUri) match {
+      case (null, _) | (_, null) => f.getLink == feed.getLink
+      case (a, b)                => a == b
+    })
+
   // launch the default browser to the headline
   def open = Desktop.getDesktop browse new URI(entry.getLink)
 

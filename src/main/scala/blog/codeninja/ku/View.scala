@@ -59,7 +59,7 @@ class View(val agg: Observable[Aggregator]) extends BorderPane {
 
     agg.headlines
       .combineLatestMap(feedFilter) { (headlines, feed) =>
-        (feed, headlines filter (h => feed.map(_ == h.feed) getOrElse true))
+        (feed, headlines filter (h => feed.map(h belongsTo _) getOrElse true))
       }
       .combineLatestMap(search) { case ((feed, headlines), search) =>
         val feedName = feed map (f => s"${f.getTitle} - ") getOrElse ""
