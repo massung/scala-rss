@@ -123,6 +123,7 @@ class View(val agg: Observable[Aggregator]) extends BorderPane {
   def clear: Unit = {
     if (searchField.text.value != "") {
       searchField.text = ""
+      list.requestFocus
     } else {
       list.selectionModel() select null
     }
