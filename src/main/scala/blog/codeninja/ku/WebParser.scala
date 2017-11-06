@@ -4,10 +4,10 @@ import monix.eval._
 import monix.execution._
 import org.json4s._
 import org.json4s.native.JsonMethods._
-import org.slf4j.{Logger, LoggerFactory}
 import scala.util._
 import scalafx.Includes._
 import scalaj.http._
+import scribe._
 
 object WebParser {
   import Scheduler.Implicits.global
@@ -22,8 +22,6 @@ object WebParser {
     val url: String,
     val domain: String,
   )
-
-  val logger = LoggerFactory getLogger "Parser"
 
   var cancelable: Option[Cancelable] = None
 
@@ -44,7 +42,7 @@ object WebParser {
 
     // execute the task
     cancelable = Some(task runOnComplete {
-      case Failure(e) => logger error e.toString
+      case Failure(e) => scribe error e.toString
       case Success(r) => andThen(r)
     })
   }

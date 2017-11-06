@@ -14,13 +14,10 @@ import scala.concurrent.duration._
 import scala.util._
 import scala.util.Try
 import scalaj.http._
-import org.slf4j.LoggerFactory
+import scribe._
 
 class Aggregator(prefs: Config.Prefs) {
   import Scheduler.Implicits.global
-
-  // slf4j logger
-  val logger = LoggerFactory getLogger "Aggregator"
 
   // filter patterns of headlines to hide
   val hideFilters = prefs.filters map {
@@ -58,7 +55,7 @@ class Aggregator(prefs: Config.Prefs) {
     Observable.intervalAtFixedRate(1.second, 5.minutes) foreach { _ =>
       Try(readFeed(url)) match {
         case Success(feed) => consumer onNext (url -> feed)
-        case Failure(ex)   => logger error s"$url ${ex.toString}"
+        case Failure(ex)   => scribe error s"$url ${ex.toString}"
       }
     }
 
@@ -74,7 +71,7 @@ class Aggregator(prefs: Config.Prefs) {
         val feed = new SyndFeedInput().build(new XmlReader(input))
 
         // output that this feed was parsed
-        logger info url
+        scribe info url
         feed
     }
   }

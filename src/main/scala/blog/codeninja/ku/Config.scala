@@ -10,14 +10,12 @@ import org.joda.time.Period
 import org.json4s._
 import org.json4s.native.JsonMethods._
 import org.json4s.native.Serialization.write
-import org.slf4j.{Logger, LoggerFactory}
 import scala.io.Source
 import scala.util.{Success, Try}
+import scribe._
 
 object Config {
   implicit val formats: Formats = DefaultFormats
-
-  val logger = LoggerFactory getLogger "Config"
 
   // definition of the preferences file
   case class Prefs(
@@ -64,7 +62,7 @@ object Config {
 
   // read the preferences file
   def load: Unit = {
-    logger info "Reloading preferences..."
+    scribe info "Reloading preferences..."
 
     Try(parse(Source.fromFile(file).mkString))
       .flatMap { json => Try(json.extract[Prefs]) }
