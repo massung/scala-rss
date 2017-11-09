@@ -35,6 +35,7 @@ class Aggregator(prefs: Config.Prefs) {
 
   // transform the feeds downloaded into a list of sorted headlines
   val headlines = feeds.map(_.values.flatMap(f => f.getEntries.asScala map (new Headline(f, _))).toList.sorted)
+    .onErrorRestartUnlimited
     .map(_ filterNot (isOld _))
     .map(_ filterNot (isHidden _))
 
