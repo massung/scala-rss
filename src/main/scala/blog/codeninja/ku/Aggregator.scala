@@ -10,6 +10,7 @@ import monix.execution.atomic._
 import monix.reactive._
 import monix.reactive.subjects._
 import scala.collection.JavaConverters._
+import scala.collection.mutable.HashMap
 import scala.concurrent.duration._
 import scala.util._
 import scala.util.Try
@@ -24,7 +25,7 @@ class Aggregator(prefs: Config.Prefs) {
     s => Pattern.compile(Pattern.quote(s), Pattern.CASE_INSENSITIVE)
   }
 
-  // create a cancelable, periodic reader for each url
+  // create a periodic reader for each URL
   val readers = prefs.urls map (aggregate _)
 
   // as each feed is read, it is sent to this consumer
@@ -33,11 +34,14 @@ class Aggregator(prefs: Config.Prefs) {
   // fold the consumed feeds together into a single map
   val feeds = consumer.scan(Map[String, SyndFeed]())(_ + _).share
 
-  // transform the feeds downloaded into a list of sorted headlines
-  val headlines = feeds.map(_.values.flatMap(f => f.getEntries.asScala map (new Headline(f, _))).toList.sorted)
+  // transform the feeds into a list of sorted headlines
+  val headlines = feeds.map(_.values.flatMap(parseEntries _).toList.sorted)
     .onErrorRestartUnlimited
     .map(_ filterNot (isOld _))
     .map(_ filterNot (isHidden _))
+   
+  // cached headlines
+  val cache = HashMap[String, Headline]()
 
   // stop running the aggregator
   def cancel = {
@@ -48,7 +52,7 @@ class Aggregator(prefs: Config.Prefs) {
   // true if the age of the headline exceeds the age limit in the preferences
   def isOld(h: Headline) = prefs.age.map(h.age.toDuration.isLongerThan _).getOrElse(false)
 
-  // true if this headlnie should be hidden from the user
+  // true if this headline should be hidden from the user
   def isHidden(h: Headline) = hideFilters.exists(p => p.matcher(h.title).find)
 
   // create a scheduled task that reads the given RSS feed
@@ -74,6 +78,13 @@ class Aggregator(prefs: Config.Prefs) {
         // output that this feed was parsed
         scribe info url
         feed
+    }
+  }
+
+  // create a list of headlines from a feed
+  def parseEntries(feed: SyndFeed): List[Headline] = {
+    feed.getEntries.asScala.toList flatMap { entry =>
+      Try(cache.getOrElseUpdate(entry.getUri, new Headline(feed, entry))).toOption
     }
   }
 }

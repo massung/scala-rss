@@ -13,12 +13,12 @@ class Headline(val feed: SyndFeed, val entry: SyndEntry) extends Comparable[Head
   val singleLine: String = entry.getTitle.replace('\n', ' ')
   val title: String = Jsoup.parse(Jsoup.clean(singleLine, Whitelist.none)).text
 
-  // extract the summary as html and then remove tags from it
+  // extract the summary as HTML and then remove tags from it
   val description: String = Option(entry.getDescription) map (_.getValue) getOrElse ""
   val summary: String = Jsoup.clean(description, Whitelist.relaxed)
 
   // when was this headline last updated or published
-  val date: Date = Option(entry.getUpdatedDate) getOrElse entry.getPublishedDate
+  val date: Date = Option(entry.getUpdatedDate) orElse Option(entry.getPublishedDate) getOrElse new Date()
 
   // media enclosures (video and audio)
   val media = entry.getEnclosures.asScala.toList

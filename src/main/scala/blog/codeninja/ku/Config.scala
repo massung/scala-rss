@@ -32,8 +32,8 @@ object Config {
         .appendSeconds().appendSuffix("s")
         .toFormatter()
 
-      ageLimit flatMap {
-        limit => Try(Period.parse(limit, parser)).toOption map (_.toStandardDuration)
+      ageLimit flatMap { limit => 
+        Try(Period.parse(limit, parser)).toOption map (_.toStandardDuration)
       }
     }
   }
