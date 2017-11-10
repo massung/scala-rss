@@ -43,7 +43,7 @@ class Aggregator(prefs: Config.Prefs) {
   // cached headlines
   val cache = HashMap[String, Headline]()
 
-  // stop running the aggregator
+  // stop running the feed readers
   def cancel = {
     consumer.onComplete
     readers.foreach(_.cancel)

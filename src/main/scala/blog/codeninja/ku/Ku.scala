@@ -11,25 +11,9 @@ import scalafx.stage.WindowEvent
 
 object Ku extends JFXApp {
   import Scheduler.Implicits.global
-
-  // create a new aggregator whenever the preferences change
-  val aggregator = Config.prefs map { prefs =>
-    val agg = new Aggregator(prefs)
-
-    Config.prefs subscribe new Observer[Config.Prefs] {
-      def onError(ex: Throwable) = agg.cancel
-      def onComplete = agg.cancel
-
-      // When the prefs change again, cancel the aggregator because
-      // a new one will be made. Also, stop watching for a new prefs
-      // update, because we'll make a new observer at that time.
-      def onNext(prefs: Config.Prefs): Future[Ack] = {
-        agg.cancel; Ack.Stop
-      }
-    }
-
-    // return the aggregator
-    agg
+  
+  val aggregator = Config.prefs.scan(new Aggregator(Config.Prefs())) {
+    (agg, prefs) => agg.cancel; new Aggregator(prefs)
   }
 
   // shut everything down nicely and terminate the app

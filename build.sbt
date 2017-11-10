@@ -8,6 +8,7 @@ scalacOptions ++= Seq("-feature", "-deprecation")
 
 libraryDependencies ++= Seq(
   "com.outr" %% "scribe" % "1.4.3",
+  "com.outr" %% "scribe-slf4j" % "1.4.3",
   "com.lihaoyi" %% "scalatags" % "0.6.7",
   "com.rometools" % "rome" % "1.8.0",
   "io.monix" %% "monix" % "3.0.0-M1",
