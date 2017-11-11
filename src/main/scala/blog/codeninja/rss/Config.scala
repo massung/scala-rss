@@ -42,7 +42,7 @@ object Config {
   val home: Path = Paths.get(System getenv "USERPROFILE")
 
   // dot file holding preferences in json format
-  val file: File = home.resolve("ku.json").toFile
+  val file: File = home.resolve("rss.json").toFile
 
   // observable list of all urls that should be read
   val prefs = PublishSubject[Prefs]()
