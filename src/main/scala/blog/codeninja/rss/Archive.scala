@@ -1,4 +1,4 @@
-package blog.codeninja.ku
+package blog.codeninja.rss
 
 import monix.execution._
 import monix.reactive.observers._

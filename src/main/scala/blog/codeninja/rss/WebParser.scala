@@ -1,4 +1,4 @@
-package blog.codeninja.ku
+package blog.codeninja.rss
 
 import monix.eval._
 import monix.execution._

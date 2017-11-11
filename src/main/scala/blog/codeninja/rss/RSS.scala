@@ -1,4 +1,4 @@
-package blog.codeninja.ku
+package blog.codeninja.rss
 
 import monix.reactive._
 import monix.execution._
@@ -9,7 +9,7 @@ import scalafx.scene.image.Image
 import scalafx.scene.layout.BorderPane
 import scalafx.stage.WindowEvent
 
-object Ku extends JFXApp {
+object RSS extends JFXApp {
   import Scheduler.Implicits.global
   
   val aggregator = Config.prefs.scan(new Aggregator(Config.Prefs())) {
@@ -25,7 +25,7 @@ object Ku extends JFXApp {
 
   // create the primary stage
   stage = new JFXApp.PrimaryStage {
-    title = "Ku"
+    title = "Scala RSS Reader"
     minWidth = 560
 
     scene = new Scene {

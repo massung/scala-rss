@@ -1,4 +1,4 @@
-package blog.codeninja.ku
+package blog.codeninja.rss
 
 import com.rometools.rome.feed.synd.SyndFeed
 import java.awt.{Desktop, Toolkit}

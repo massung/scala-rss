@@ -1,11 +1,11 @@
-package blog.codeninja.ku
+package blog.codeninja.rss
 
 import scalafx.scene.control.{Menu, MenuBar, MenuItem, SeparatorMenuItem}
 import scalafx.scene.input.KeyCombination
 
 class MainMenu(val view: View) extends MenuBar {
   val quitItem = new MenuItem("Quit") {
-    onAction = { _ => Ku.quit }
+    onAction = { _ => RSS.quit }
   }
 
   val openItem = new MenuItem("Open in Browser...") {

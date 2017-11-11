@@ -1,4 +1,4 @@
-package blog.codeninja.ku
+package blog.codeninja.rss
 
 import java.awt.Desktop
 import java.io.{File, PrintWriter}
