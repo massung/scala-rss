@@ -25,7 +25,7 @@ object RSS extends JFXApp {
    * terminate the application.
    */
   def quit = {
-    Config.cancel
+    Config.watcher.cancel
     Archive.onComplete
     Platform.exit
   }

@@ -3,7 +3,6 @@ package blog.codeninja.rss
 import java.awt.Desktop
 import java.io.{File, PrintWriter}
 import java.nio.file._
-import java.util.concurrent.TimeUnit
 import monix.reactive.subjects._
 import org.joda.time.format.PeriodFormatterBuilder
 import org.joda.time.Period
@@ -17,98 +16,78 @@ import scribe._
 object Config {
   implicit val formats: Formats = DefaultFormats
 
+  /**
+   * Whenever the preferences are loaded, send them to this observable.
+   */
+  val prefs = PublishSubject[Prefs]()
+  
+  /**
+   * Create a time period parser for limiting the age of a headline.
+   */
+  val ageParser = new PeriodFormatterBuilder()
+    .appendWeeks().appendSuffix("w")
+    .appendDays().appendSuffix("d")
+    .appendHours().appendSuffix("h")
+    .appendMinutes().appendSuffix("m")
+    .appendSeconds().appendSuffix("s")
+    .toFormatter()
+
   // definition of the preferences file
   case class Prefs(
     val urls: List[String] = List.empty,
     val ageLimit: Option[String] = None,
     val filters: List[String] = List.empty,
   ) {
-    val age = {
-      val parser = new PeriodFormatterBuilder()
-        .appendWeeks().appendSuffix("w")
-        .appendDays().appendSuffix("d")
-        .appendHours().appendSuffix("h")
-        .appendMinutes().appendSuffix("m")
-        .appendSeconds().appendSuffix("s")
-        .toFormatter()
-
-      ageLimit flatMap { limit => 
-        Try(Period.parse(limit, parser)).toOption map (_.toStandardDuration)
-      }
+    val age = ageLimit flatMap { 
+      s => Option(Period.parse(s, ageParser)) map (_.toStandardDuration)
     }
   }
 
-  // home folder where the dot file is saved
-  val home: Path = Paths.get(System getenv "USERPROFILE")
+  /**
+   * Find the user's HOME path and the preferences file within it.
+   */
+  val file = Paths get (System getenv "USERPROFILE") resolve "rss.json"
+  
+  /**
+   * Create a file watcher on the preferences file.
+   */
+  val watcher = new Watcher(file)(load _)
 
-  // dot file holding preferences in json format
-  val file: File = home.resolve("rss.json").toFile
+  /**
+   * Load the file and publish the new preferences.
+   */
+  def load: Unit = {
+    scribe info "Reloading preferences..."
+        
+    // extract the preferences or use a new set of preferences 
+    val json = Source.fromFile(file.toFile).mkString
+    val it = Try(parse(json))
+      .flatMap (obj => Try(obj.extract[Prefs]))
+      .getOrElse (new Prefs)
+    
+    // update the preferences 
+    prefs onNext it
+  }
 
-  // observable list of all urls that should be read
-  val prefs = PublishSubject[Prefs]()
+  /**
+   * Launch the default editor and let the user modify the preferences.
+   */
+  def open: Unit = {
+    if (Try(Desktop.getDesktop open file.toFile).isFailure) {
+      val writer = new PrintWriter(file.toFile)
 
-  // open the preferences file in the default editor
-  def open: Unit =
-    if (Try(Desktop.getDesktop open file).isFailure) {
-      val writer = new PrintWriter(file)
-
-      // create the default preferences fil
+      // create the default preferences file
       writer.write(write(new Prefs))
       writer.close
 
       // try again
       open
     }
-
-  // read the preferences file
-  def load: Unit = {
-    scribe info "Reloading preferences..."
-
-    Try(parse(Source.fromFile(file).mkString))
-      .flatMap { json => Try(json.extract[Prefs]) }
-      .orElse { Success(new Prefs) }
-      .foreach (prefs onNext _)
   }
-
-  // create a new watch service
-  val service = FileSystems.getDefault.newWatchService
-
-  // watches for changes in the user's home directory
-  home.register(service, StandardWatchEventKinds.ENTRY_MODIFY)
-
-  // set to true when the watch thread should terminate
-  private var cancelRequested = false
-
-  // create a thread that looks for changes to the config file
-  val watch = new Thread {
-    def handleEvent(e: WatchEvent[_]): Unit =
-      e.context match {
-        case p: Path if p.getFileName.toString == file.getName => load
-        case _                                                 => ()
-      }
-
-    // loop forever, handling all events
-    override def run = {
-      while (!cancelRequested) {
-        val key = Option(service.poll(500, TimeUnit.MILLISECONDS))
-
-        // loop over all the events posted looking for modifications
-        key foreach { key =>
-          key.pollEvents.toArray foreach {
-            case e: WatchEvent[_] => handleEvent(e)
-            case _                => ()
-          }
-
-          // prepare the next event
-          key.reset
-        }
-      }
-    }
-  }
-
-  // elegantly ask the stop thread to terminate
-  def cancel: Unit = cancelRequested = true
-
-  // start the thread
-  watch.start
+  
+  // start watching for the preferences file to change
+  watcher.start
+  
+  // load the preferences
+  load
 }
