@@ -20,55 +20,90 @@ import scribe._
 class Aggregator(prefs: Config.Prefs) {
   import Scheduler.Implicits.global
 
-  // filter patterns of headlines to hide
-  val hideFilters = prefs.filters map {
-    s => Pattern.compile(Pattern.quote(s), Pattern.CASE_INSENSITIVE)
-  }
-
-  // create a periodic reader for each URL
+  /**
+   * Each URL creates a periodic task that downloads the feed.
+   */
   val readers = prefs.urls map (aggregate _)
 
-  // as each feed is read, it is sent to this consumer
-  val consumer = PublishSubject[(String, SyndFeed)]()
+  /**
+   * Every time a feed is fetched it is sent to this subject for aggregation.
+   * This observable simply allows for observers to be aware when a feed has
+   * been fetched.
+   */
+  val aggregator = PublishSubject[(String, SyndFeed)]()
 
-  // fold the consumed feeds together into a single map
-  val feeds = consumer.scan(Map[String, SyndFeed]())(_ + _).share
+  /**
+   * Each time a feed is fetched it needs to be accumulated into a single 
+   * container. The feeds map is each feed (keyed by the URL used to fetch
+   * it). It is shared so multiple observers can watch it. 
+   */
+  val feeds = aggregator.scan(Map[String, SyndFeed]())(_ + _).share
 
-  // transform the feeds into a list of sorted headlines
-  val headlines = feeds.map(_.values.flatMap(parseEntries _).toList.sorted)
+  /**
+   * Each time the feeds map is updated with a new feed, all the headlines are
+   * extracted, parsed, and sorted. The headlines are then filtered by age
+   * and whether or not they are hidden from the user based on preferences.
+   */
+  val headlines = feeds.map(_.values.flatMap(extractHeadlines _).toList.sorted)
     .onErrorRestartUnlimited
     .map(_ filterNot (isOld _))
     .map(_ filterNot (isHidden _))
    
-  // cached headlines
+  /**
+   * Keep a map of URI -> parsed headlines. If a headline has already been
+   * parsed once, it shouldn't be parsed again. This is done because some feeds
+   * don't post information like date/time, and each time the feed is updated
+   * that information shouldn't be reset.
+   */
   val cache = HashMap[String, Headline]()
 
-  // stop running the feed readers
+  /**
+   * Generate a list of regular expressions that - when matched - hide the
+   * headlines extracted.
+   */
+  val hideFilters = prefs.filters map {
+    s => Pattern.compile(Pattern.quote(s), Pattern.CASE_INSENSITIVE)
+  }
+
+  /**
+   * Stop aggregating and cancel all periodic feed download tasks. 
+   */
   def cancel = {
-    consumer.onComplete
+    aggregator.onComplete
     readers.foreach(_.cancel)
   }
 
-  // true if the age of the headline exceeds the age limit in the preferences
+  /**
+   * True if the Headline is older than the desired age in the preferences. 
+   */
   def isOld(h: Headline) = prefs.age.map(h.age.toDuration.isLongerThan _).getOrElse(false)
 
-  // true if this headline should be hidden from the user
+  /**
+   * True if the Headline title matches any of the hideFilter patterns.
+   */
   def isHidden(h: Headline) = hideFilters.exists(p => p.matcher(h.title).find)
 
-  // create a scheduled task that reads the given RSS feed
-  def aggregate(url: String) =
+  /**
+   * Create a scheduled task that will periodically attempt to download the
+   * RSS feed at a given URL.
+   */
+  def aggregate(url: String) = {
     Observable.intervalAtFixedRate(1.second, 5.minutes) foreach { _ =>
-      Try(readFeed(url)) match {
-        case Success(feed) => consumer onNext (url -> feed)
+      Try(download(url)) match {
+        case Success(feed) => aggregator onNext feed
         case Failure(ex)   => scribe error s"$url ${ex.toString}"
       }
     }
+  }
 
-  // download the RSS feed, add it to the feed list, and update the view
-  def readFeed(url: String, redirects: Int = 5): SyndFeed = {
+  /**
+   * Download the URL as an RSS feed and parse it. Handle following redirects
+   * and throw an exception if the feed isn't there.
+   */
+  def download(url: String, redirects: Int = 5): (String, SyndFeed) = {
     Http(url).timeout(5000, 10000).asBytes match {
       case r if r.isRedirect && redirects > 0 =>
-        readFeed(r.location.get, redirects-1)
+        download(r.location.get, redirects-1)
       case r if !r.isSuccess =>
         throw new Exception(r.statusLine)
       case r =>
@@ -77,12 +112,15 @@ class Aggregator(prefs: Config.Prefs) {
 
         // output that this feed was parsed
         scribe info url
-        feed
+        url -> feed
     }
   }
 
-  // create a list of headlines from a feed
-  def parseEntries(feed: SyndFeed): List[Headline] = {
+  /**
+   * Walk the entries of a feed and parse each into a Headline. If the entry
+   * has already been parsed (in the cache), use that instead.
+   */
+  def extractHeadlines(feed: SyndFeed): List[Headline] = {
     feed.getEntries.asScala.toList flatMap { entry =>
       Try(cache.getOrElseUpdate(entry.getUri, new Headline(feed, entry))).toOption
     }

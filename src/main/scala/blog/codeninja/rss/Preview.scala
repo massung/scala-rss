@@ -16,19 +16,34 @@ import scalatags.Text.all._
 class Preview(val headline: ObjectProperty[Headline]) extends WebView {
   import Scheduler.Implicits.global
 
-  // load the styles
+  /**
+   * The CSS styles to be embedded in every preview.
+   */
   val styles = Source.fromFile(getClass.getResource("/preview.css").toURI).mkString
 
-  // style the scrollbar and browser view
+  /**
+   * The styles to use for the actual FX control.
+   */
   stylesheets = Seq("/browser.css")
 
-  // fix the size of the preview
+  /**
+   * Fixed width size of the control.
+   */
   prefWidth = 360
 
-  // keep track of the currently previewed headline
+  /**
+   * Maintain a pointer to the currently previewed headline.
+   */
   var previewedHeadline: Headline = _
 
-  // whenever the headline changes, update the HTML body
+  /**
+   * Whenever the currently selected Headline changes, update the preview.
+   * 
+   * NOTE: The headline is separate from the previewedHeadline because when
+   *       ListView is updated the selected headline observable will change.
+   *       While the previewedHeadline will remain unchanged, but comparing
+   *       them will return true.
+   */
   headline onChange { (_, _, h) =>
     if (h != null && !h.equals(previewedHeadline)) {
       val template =
@@ -58,43 +73,51 @@ class Preview(val headline: ObjectProperty[Headline]) extends WebView {
     }
   }
 
-  // whenever the template is finished loading, fix all links
+  /**
+   * When the HTML generated for the preview is done being loaded into the
+   * browser engine, go through and fix-up all the anchor links.
+   */
   engine.delegate.getLoadWorker.stateProperty addListener {
-    (_, _, state) => fixLinks(state)
+    (_, _, state) => fixLinks(new Worker.State(state))
   }
 
-  // ku object for opening links in browser
+  /**
+   * Custom object users for handling anchor clicks so they are opened in
+   * an external browser instead of relocating the preview.
+   */
   class UrlClicker() {
     def open(url: String) = Desktop.getDesktop browse new URI(url)
   }
 
-  // change all the links to open the default browser
+  /**
+   * Loop over all the links in the preview and change them so that - when
+   * clicked - they open an external browser instead of changing the preview
+   * HREF location.
+   */
   def fixLinks(state: Worker.State): Unit = {
     if (state == Worker.State.Succeeded) {
       val doc = engine.getDocument
       val nodes = doc.getElementsByTagName("a")
 
-      // loop over all the anchors and add onclick event handlers
+      // loop over all the anchors and add click event handlers
       for (i <- 0 until nodes.getLength) {
-        nodes.item(i) match {
-          case a: HTMLAnchorElement => Option(a.getHref) foreach { href =>
-            val attr = doc.createAttribute("onclick")
-
-            // set the link to open when clicked
-            attr.setValue(s"ku.open('$href'); return false;")
-
-            // add the attribute or override the existing one
-            a.getAttributes.setNamedItem(attr)
-          }
-
-          // shouldn't happen, but sometimes does
-          case _ => ()
+        Option(nodes.item(i)) collect {
+          case a: HTMLAnchorElement =>
+            Option(a.getHref) foreach { href =>
+              val attr = doc.createAttribute("onclick")
+  
+              // set the link to open when clicked
+              attr.setValue(s"rss.open('$href'); return false;")
+  
+              // add the attribute or override the existing one
+              a.getAttributes.setNamedItem(attr)
+            }
         }
       }
 
-      // create the 'ku' object that opens links in browser
+      // create the object that opens links in browser
       engine.executeScript("window") match {
-        case window: JSObject => window.setMember("ku", new UrlClicker)
+        case window: JSObject => window.setMember("rss", new UrlClicker)
       }
     }
   }

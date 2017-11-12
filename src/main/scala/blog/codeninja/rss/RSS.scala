@@ -12,18 +12,27 @@ import scalafx.stage.WindowEvent
 object RSS extends JFXApp {
   import Scheduler.Implicits.global
   
+  /**
+   * Every time the preferences are updated, cancel the current download
+   * tasks and create a new Aggregator.
+   */
   val aggregator = Config.prefs.scan(new Aggregator(Config.Prefs())) {
     (agg, prefs) => agg.cancel; new Aggregator(prefs)
   }
 
-  // shut everything down nicely and terminate the app
+  /**
+   * Elegantly shutdown the preferences watch, close out the archive, and
+   * terminate the application.
+   */
   def quit = {
     Config.cancel
     Archive.onComplete
     Platform.exit
   }
 
-  // create the primary stage
+  /**
+   * Create the primary stage.
+   */
   stage = new JFXApp.PrimaryStage {
     title = "Scala RSS Reader"
     minWidth = 560
@@ -39,7 +48,9 @@ object RSS extends JFXApp {
     Config.load
   }
 
-  // load the icons for the language
+  /**
+   * Set the application icon.
+   */
   stage.icons.setAll(
     new Image("/icon/icon_128.png"),
     new Image("/icon/icon_64.png"),
