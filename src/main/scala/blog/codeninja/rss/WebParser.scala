@@ -20,8 +20,8 @@ object WebParser {
   case class ParseResponse(
     val title: String,
     val content: String,
-    val date_published: String,
-    val lead_image_url: String,
+    val datePublished: String,
+    val leadImageUrl: String,
     val url: String,
     val domain: String,
   )
@@ -48,7 +48,7 @@ object WebParser {
 
     // background task to request and parse
     val task = Task {
-      parse(req.asString.body).extract[ParseResponse]
+      parse(req.asString.body).camelizeKeys.extract[ParseResponse]
     }
 
     // execute the task
