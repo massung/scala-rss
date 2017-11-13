@@ -11,12 +11,12 @@ import scalafx.stage.WindowEvent
 
 object RSS extends JFXApp {
   import Scheduler.Implicits.global
-  
+
   /**
    * Every time the preferences are updated, cancel the current download
    * tasks and create a new Aggregator.
    */
-  val aggregator = Config.prefs.scan(new Aggregator(Config.Prefs())) {
+  val aggregator = Config.prefs.scan(new Aggregator(new Config.Prefs)) {
     (agg, prefs) => agg.cancel; new Aggregator(prefs)
   }
 
@@ -24,7 +24,7 @@ object RSS extends JFXApp {
    * Elegantly shutdown the preferences watch, close out the archive, and
    * terminate the application.
    */
-  def quit = {
+  override def stopApp = {
     Config.watcher.cancel
     Archive.onComplete
     Platform.exit
@@ -41,23 +41,20 @@ object RSS extends JFXApp {
       root = new View(aggregator)
     }
 
-    // stop all background processing
-    onCloseRequest = { _ => quit }
+    icons.setAll(
+      new Image("/icon/icon_128.png"),
+      new Image("/icon/icon_64.png"),
+      new Image("/icon/icon_48.png"),
+      new Image("/icon/icon_32.png"),
+      new Image("/icon/icon_24.png"),
+      new Image("/icon/icon_20.png"),
+      new Image("/icon/icon_16.png"),
+    )
 
-    // load the configuration file
-    Config.load
+    // stop all background processing
+    onCloseRequest = { _ => JFXApp.Stage.close }
   }
 
-  /**
-   * Set the application icon.
-   */
-  stage.icons.setAll(
-    new Image("/icon/icon_128.png"),
-    new Image("/icon/icon_64.png"),
-    new Image("/icon/icon_48.png"),
-    new Image("/icon/icon_32.png"),
-    new Image("/icon/icon_24.png"),
-    new Image("/icon/icon_20.png"),
-    new Image("/icon/icon_16.png"),
-  )
+  // load the configuration file
+  Config.load
 }
