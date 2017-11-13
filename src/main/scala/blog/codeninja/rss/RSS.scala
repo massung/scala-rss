@@ -44,7 +44,7 @@ object RSS extends JFXApp {
     // stop all background processing
     onCloseRequest = { _ => quit }
 
-    // load the config file
+    // load the configuration file
     Config.load
   }
 

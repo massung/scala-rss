@@ -10,7 +10,7 @@ import org.json4s._
 import org.json4s.native.JsonMethods._
 import org.json4s.native.Serialization.write
 import scala.io.Source
-import scala.util.{Success, Try}
+import scala.util._
 import scribe._
 
 object Config {
@@ -46,7 +46,10 @@ object Config {
   /**
    * Find the user's HOME path and the preferences file within it.
    */
-  val file = Paths get (System getenv "USERPROFILE") resolve "rss.json"
+  val file = List("HOME", "USERPROFILE")
+    .flatMap(env => Option(System getenv env))
+    .map(Paths.get(_, "rss.json"))
+    .head
   
   /**
    * Create a file watcher on the preferences file.
@@ -59,14 +62,13 @@ object Config {
   def load: Unit = {
     scribe info "Reloading preferences..."
         
-    // extract the preferences or use a new set of preferences 
-    val json = Source.fromFile(file.toFile).mkString
-    val it = Try(parse(json))
-      .flatMap (obj => Try(obj.extract[Prefs]))
-      .getOrElse (new Prefs)
+    // load the source file and parse it as JSON
+    val source = Source.fromFile(file.toFile).mkString
     
     // update the preferences 
-    prefs onNext it
+    Try(parse(source)) foreach {
+      json => Option(json.extract[Prefs]) foreach (prefs.onNext _)
+    }
   }
 
   /**
@@ -87,7 +89,4 @@ object Config {
   
   // start watching for the preferences file to change
   watcher.start
-  
-  // load the preferences
-  load
 }
