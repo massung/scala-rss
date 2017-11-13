@@ -20,7 +20,7 @@ object Config {
    * Whenever the preferences are loaded, send them to this observable.
    */
   val prefs = PublishSubject[Prefs]()
-  
+
   /**
    * Create a time period parser for limiting the age of a headline.
    */
@@ -38,7 +38,7 @@ object Config {
     val ageLimit: Option[String] = None,
     val filters: List[String] = List.empty,
   ) {
-    val age = ageLimit flatMap { 
+    val age = ageLimit flatMap {
       s => Option(Period.parse(s, ageParser)) map (_.toStandardDuration)
     }
   }
@@ -50,7 +50,7 @@ object Config {
     .flatMap(env => Option(System getenv env))
     .map(Paths.get(_, "rss.json"))
     .head
-  
+
   /**
    * Create a file watcher on the preferences file.
    */
@@ -61,13 +61,15 @@ object Config {
    */
   def load: Unit = {
     scribe info "Reloading preferences..."
-        
+
     // load the source file and parse it as JSON
-    val source = Source.fromFile(file.toFile).mkString
-    
-    // update the preferences 
-    Try(parse(source)) foreach {
-      json => Option(json.extract[Prefs]) foreach (prefs.onNext _)
+    if (Files.exists(file) && Files.isRegularFile(file)) {
+      val source = Source.fromFile(file.toFile).mkString
+
+      // update the preferences
+      Try(parse(source)) foreach {
+        json => Option(json.extract[Prefs]) foreach (prefs.onNext _)
+      }
     }
   }
 
@@ -86,7 +88,7 @@ object Config {
       open
     }
   }
-  
+
   // start watching for the preferences file to change
   watcher.start
 }
