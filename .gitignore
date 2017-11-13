@@ -1,6 +1,8 @@
 .cache-main
 .classpath
 .project
+.ensime
+.ensime_cache/
 .settings/
 bin/
 project/project/
