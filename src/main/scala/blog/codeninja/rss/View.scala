@@ -10,6 +10,7 @@ import monix.execution._
 import monix.reactive._
 import monix.reactive.subjects._
 import scala.collection.JavaConverters._
+import scala.concurrent.duration._
 import scalafx.Includes._
 import scalafx.application.Platform
 import scalafx.beans.property.ObjectProperty
@@ -56,16 +57,17 @@ class View(val agg: Observable[Aggregator]) extends BorderPane {
       .combineLatestMap(feedFilter) { (headlines, feed) =>
         (feed, headlines filter (h => feed.map(h belongsTo _) getOrElse true))
       }
-      .combineLatestMap(search) { case ((feed, headlines), search) =>
-        val feedName = feed map (f => s"${f.getTitle} - ") getOrElse ""
-        val matched = headlines.filter(h => search.matcher(h.title).find)
+      .combineLatestMap(search debounce 100.milliseconds) {
+        case ((feed, headlines), search) =>
+          val feedName = feed map (f => s"${f.getTitle} - ") getOrElse ""
+          val matched = headlines.filter(h => search.matcher(h.title).find)
 
-        Platform runLater {
-          info.text = s"$feedName${matched.length} headlines; $infoText"
-        }
+          Platform runLater {
+            info.text = s"$feedName${matched.length} headlines; $infoText"
+          }
 
-        // return only the matched headlines
-        matched
+          // return only the matched headlines
+          matched
       }
   }
 
