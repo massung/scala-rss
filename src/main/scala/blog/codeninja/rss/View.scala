@@ -20,7 +20,7 @@ import scalafx.scene.control.{Label, ListCell, ListView, MenuItem, SeparatorMenu
 import scalafx.scene.input.{KeyCode, KeyEvent}
 import scalafx.scene.layout.{BorderPane, VBox}
 
-class View(val agg: Observable[Aggregator]) extends BorderPane {
+class View(val agg: Observable[Aggregator], val archive: Archive) extends BorderPane {
   import Scheduler.Implicits.global
 
   // initial window sizing
@@ -57,7 +57,7 @@ class View(val agg: Observable[Aggregator]) extends BorderPane {
       .combineLatestMap(feedFilter) { (headlines, feed) =>
         (feed, headlines filter (h => feed.map(h belongsTo _) getOrElse true))
       }
-      .combineLatestMap(search debounce 100.milliseconds) {
+      .combineLatestMap(search) {
         case ((feed, headlines), search) =>
           val feedName = feed map (f => s"${f.getTitle} - ") getOrElse ""
           val matched = headlines.filter(h => search.matcher(h.title).find)
@@ -72,7 +72,7 @@ class View(val agg: Observable[Aggregator]) extends BorderPane {
   }
 
   // unread headlines aren't in the archive list
-  val unreadHeadlines = filteredHeadlines.combineLatestMap(Archive) {
+  val unreadHeadlines = filteredHeadlines.combineLatestMap(archive) {
     (all, read) => all filterNot (read contains _)
   }
 
@@ -112,11 +112,11 @@ class View(val agg: Observable[Aggregator]) extends BorderPane {
     }
 
     // archive the original selection
-    Archive onNext Push(h)
+    archive onNext Push(h)
   }
 
   // undo the previous archive action and select it
-  def undoArchive(): Unit = Archive onNext Undo()
+  def undoArchive(): Unit = archive onNext Undo()
 
   // set the focus to the search field
   def doSearch(): Unit = Platform runLater { searchField.requestFocus }
@@ -175,7 +175,7 @@ class View(val agg: Observable[Aggregator]) extends BorderPane {
     }
 
     // clear selection and open browser
-    onKeyPressed = onKey
+    //onKeyPressed = onKey
   }
 
   // whenever new aggregator updates headlines, update the list

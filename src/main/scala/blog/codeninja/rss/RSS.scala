@@ -19,6 +19,11 @@ object RSS extends JFXApp {
   val aggregator = Config.prefs.scan(new Aggregator(new Config.Prefs)) {
     (agg, prefs) => agg.cancel; new Aggregator(prefs)
   }
+  
+  /**
+   * Archive of headlines.
+   */
+  val archive = new Archive
 
   /**
    * Elegantly shutdown the preferences watch, close out the archive, and
@@ -26,7 +31,6 @@ object RSS extends JFXApp {
    */
   override def stopApp = {
     Config.watcher.cancel
-    Archive.onComplete
     Platform.exit
   }
 
@@ -38,7 +42,7 @@ object RSS extends JFXApp {
     minWidth = 560
 
     scene = new Scene {
-      root = new View(aggregator)
+      root = new View(aggregator, archive)
     }
 
     icons.setAll(
