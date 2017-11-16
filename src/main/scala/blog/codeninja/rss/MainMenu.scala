@@ -17,13 +17,12 @@ class MainMenu(val view: View) extends MenuBar {
 
   val archiveItem = new MenuItem("Archive") {
     onAction = { _ => view.archive() }
-    accelerator = KeyCombination.keyCombination("x")
+    accelerator = KeyCombination.keyCombination("delete")
     disable <== view.headline === null
   }
 
   val undoArchiveItem = new MenuItem("Undo Archive") {
     onAction = { _ => view.undoArchive() }
-    accelerator = KeyCombination.keyCombination("u")
     disable <== view.headline === null
   }
 

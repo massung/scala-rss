@@ -134,14 +134,9 @@ class View(val agg: Observable[Aggregator], val archive: Archive) extends Border
   // shared event handler for controls
   def onKey(e: KeyEvent): Unit = {
     e.code match {
-      case KeyCode.P                  => Config.open
-      case KeyCode.X | KeyCode.Delete => archive(!e.shiftDown)
-      case KeyCode.C                  => copy(e.controlDown)
-      case KeyCode.U                  => undoArchive
-      case KeyCode.Slash              => doSearch
-      case KeyCode.Escape             => clear
-      case KeyCode.Enter              => open
-      case _                          => ()
+      case KeyCode.P     => Config.open
+      case KeyCode.Enter => open
+      case _             => ()
     }
   }
 
@@ -175,7 +170,7 @@ class View(val agg: Observable[Aggregator], val archive: Archive) extends Border
     }
 
     // clear selection and open browser
-    //onKeyPressed = onKey
+    onKeyPressed = onKey
   }
 
   // whenever new aggregator updates headlines, update the list
@@ -186,7 +181,7 @@ class View(val agg: Observable[Aggregator], val archive: Archive) extends Border
   }
 
   // common info text
-  val infoText = "[ret] open; [esc] close; [x] archive; [u] undo; [/] search; [c] copy"
+  val infoText = "[ret] open; [esc] close; [del] archive; [c] copy; [/] search"
 
   // label showing number of headlines, feeds, etc.
   val info = new Label(infoText) {

@@ -19,20 +19,16 @@ object RSS extends JFXApp {
   val aggregator = Config.prefs.scan(new Aggregator(new Config.Prefs)) {
     (agg, prefs) => agg.cancel; new Aggregator(prefs)
   }
-  
+
   /**
    * Archive of headlines.
    */
   val archive = new Archive
 
   /**
-   * Elegantly shutdown the preferences watch, close out the archive, and
-   * terminate the application.
+   * Nicely quit the preferences watcher thread.
    */
-  override def stopApp = {
-    Config.watcher.cancel
-    Platform.exit
-  }
+  override def stopApp = Config.watcher.cancel
 
   /**
    * Create the primary stage.

@@ -44,12 +44,18 @@ object Config {
   }
 
   /**
+   * Where are the config files located.
+   */
+  val home = List("HOME", "USERPROFILE")
+    .flatMap(env => Option(System getenv env))
+    .headOption
+    .map(Paths.get(_))
+    .getOrElse(Paths.get("/"))
+
+  /**
    * Find the user's HOME path and the preferences file within it.
    */
-  val file = List("HOME", "USERPROFILE")
-    .flatMap(env => Option(System getenv env))
-    .map(Paths.get(_, "rss.json"))
-    .head
+  val file = home.resolve("rss.json")
 
   /**
    * Create a file watcher on the preferences file.

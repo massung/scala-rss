@@ -10,13 +10,18 @@ import monix.reactive.subjects._
  * or popped (undone). Each action updates the state of the observable.
  */
 class Archive extends Observer[Archive.Action] {
+  import Scheduler.Implicits.global
+
+  /**
+   * The actor receives messages that then update the state.
+   */
   private val actor = PublishSubject[Archive.Action]()
-  
+
   // Observer contract methods.
   def onNext(action: Archive.Action) = actor.onNext(action)
   def onComplete = actor.onComplete
   def onError(ex: Throwable) = actor.onError(ex)
-  
+
   /**
    * Collect all the actions and update the state.
    */
@@ -34,24 +39,24 @@ class Archive extends Observer[Archive.Action] {
 object Archive {
   import scala.language.higherKinds
   import scala.language.implicitConversions
-  
+
   /**
    * Actions taken on an archive must extend this trait.
    */
   sealed trait Action
-  
+
   /**
    * Push a headline into the archive.
    */
   final case class Push(h: Headline) extends Action
-  
+
   /**
    * Pop the last headline pushed onto the archive.
    */
   final case class Undo() extends Action
-  
+
   /**
    * Convert an Archive into an Observable.
    */
-  implicit def toObservable[List[Headline]](a: Archive) = a.observable 
+  implicit def toObservable[List[Headline]](a: Archive) = a.observable
 }

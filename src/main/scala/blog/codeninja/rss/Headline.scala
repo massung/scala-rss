@@ -21,17 +21,18 @@ class Headline(val feed: SyndFeed, val entry: SyndEntry) extends Comparable[Head
    */
   val description: String = Option(entry.getDescription) map (_.getValue) getOrElse ""
   val summary: String = Jsoup.clean(description, Whitelist.relaxed)
+  val body: String = Jsoup.parse(summary).body.text
 
   /**
    * Get the published date of this Headline. If there is no updated date set,
    * use the published date of the feed. If that isn't set, use the date now.
    */
-  val date = Option(entry.getUpdatedDate) 
+  val date = Option(entry.getUpdatedDate)
     .orElse(Option(entry.getPublishedDate))
     .getOrElse(new Date)
 
   /**
-   * Get all the media enclosures from the Headline. 
+   * Get all the media enclosures from the Headline.
    */
   val media = entry.getEnclosures.asScala.toList
 
@@ -78,7 +79,7 @@ class Headline(val feed: SyndFeed, val entry: SyndEntry) extends Comparable[Head
 
   /**
    * True if a Headline belongs to a given feed. This exists since Headlines
-   * are cached and the feed object can change. 
+   * are cached and the feed object can change.
    */
   def belongsTo(f: SyndFeed) =
     f == feed || ((f.getUri, feed.getUri) match {
