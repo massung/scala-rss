@@ -1,10 +1,8 @@
-import org.ensime.EnsimeKeys._
-
 name := "scala-rss"
 
 version := "0.1"
 
-scalaVersion := "2.12.3"
+scalaVersion := "2.12.4"
 
 scalacOptions ++= Seq("-feature", "-deprecation")
 
@@ -20,5 +18,3 @@ libraryDependencies ++= Seq(
   "org.scalaj" %% "scalaj-http" % "2.3.0",
   "org.scalafx" %% "scalafx" % "8.0.102-R11",
 )
-
-ensimeIgnoreMissingDirectories := true
