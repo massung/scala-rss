@@ -134,9 +134,10 @@ class View(val agg: Observable[Aggregator], val archive: Archive) extends Border
   // shared event handler for controls
   def onKey(e: KeyEvent): Unit = {
     e.code match {
-      case KeyCode.P     => Config.open
-      case KeyCode.Enter => open
-      case _             => ()
+      case KeyCode.P      => Config.open
+      case KeyCode.Enter  => open
+      case KeyCode.Escape => clear
+      case _              => ()
     }
   }
 
