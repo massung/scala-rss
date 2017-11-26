@@ -116,7 +116,7 @@ class View(val agg: Observable[Aggregator], val archive: Archive) extends Border
   }
 
   // undo the previous archive action and select it
-  def undoArchive(): Unit = archive onNext Archive.Undo()
+  def undoArchive(): Unit = archive onNext Archive.Undo
 
   // set the focus to the search field
   def doSearch(): Unit = Platform runLater { searchField.requestFocus }

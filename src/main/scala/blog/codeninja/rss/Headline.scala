@@ -1,6 +1,6 @@
 package blog.codeninja.rss
 
-import com.rometools.rome.feed.synd.{SyndEntry, SyndFeed}
+import com.rometools.rome.feed.synd.{SyndContent, SyndEntry, SyndFeed}
 import java.awt.Desktop
 import java.net.URI
 import java.util.Date
@@ -19,7 +19,8 @@ class Headline(val feed: SyndFeed, val entry: SyndEntry) extends Comparable[Head
    * Get the optional description of the Headline. Then parse parse and clean
    * the HTML inside it as a summary.
    */
-  val description: String = Option(entry.getDescription) map (_.getValue) getOrElse ""
+  val contents: Option[SyndContent] = entry.getContents.asScala.headOption
+  val description: String = contents orElse Option(entry.getDescription) map (_.getValue) getOrElse ""
   val summary: String = Jsoup.clean(description, Whitelist.relaxed)
   val body: String = Jsoup.parse(summary).body.text
 

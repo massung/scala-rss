@@ -28,7 +28,7 @@ class Archive extends Observer[Archive.Action] {
   private val observable = List.empty[Headline] +: actor.scan(List.empty[Headline]) {
     (t, a) => a match {
       case Archive.Push(h) => h :: t
-      case Archive.Undo()  => t drop 1
+      case Archive.Undo    => t drop 1
     }
   }
 }
@@ -53,7 +53,7 @@ object Archive {
   /**
    * Pop the last headline pushed onto the archive.
    */
-  final case class Undo() extends Action
+  final case object Undo extends Action
 
   /**
    * Convert an Archive into an Observable.

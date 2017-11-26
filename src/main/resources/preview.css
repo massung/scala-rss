@@ -92,8 +92,15 @@ img, iframe, video {
 	margin: 1.0em auto 0.5em 0;
 	max-width: 100%;
 	height: auto !important;
+}
+
+img[width~=32px], iframe, video {
 	border: 1px solid #ccc;
 	box-shadow: 0px 1px 3px 2px rgba(0, 0, 0, 0.5);
+}
+
+img[src=""], iframe[src=""], video[src=""] {
+    display: none;
 }
 
 blockquote {
