@@ -111,6 +111,9 @@ class View(val agg: Observable[Aggregator], val archive: Archive) extends Border
       }
     }
 
+    // set the read flag for the headline
+    h.isRead update !h.isRead.value
+
     // archive the original selection
     archive onNext Archive.Push(h)
   }
@@ -161,6 +164,10 @@ class View(val agg: Observable[Aggregator], val archive: Archive) extends Border
 
         item.onChange { (_, _, h) =>
           text = Option(h) map(_.toString) getOrElse null
+
+          if (h != null) {
+            opacity <== when (h.isRead) choose 0.6 otherwise 1.0
+          }
         }
       }
     }

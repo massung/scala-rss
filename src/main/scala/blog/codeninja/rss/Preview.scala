@@ -16,34 +16,29 @@ import scalatags.Text.all._
 class Preview(val headline: ObjectProperty[Headline]) extends WebView {
   import Scheduler.Implicits.global
 
-  /**
-   * The CSS styles to be embedded in every preview.
-   */
+  /** The CSS styles to be embedded in every preview.
+    */
   val styles = Source.fromFile(getClass.getResource("/preview.css").toURI).mkString
 
-  /**
-   * The styles to use for the actual FX control.
-   */
+  /** The styles to use for the actual FX control.
+    */
   stylesheets = Seq("/browser.css")
 
-  /**
-   * Fixed width size of the control.
-   */
+  /** Fixed width size of the control.
+    */
   prefWidth = 360
 
-  /**
-   * Maintain a pointer to the currently previewed headline.
-   */
+  /** Maintain a pointer to the currently previewed headline.
+    */
   var previewedHeadline: Headline = _
 
-  /**
-   * Whenever the currently selected Headline changes, update the preview.
-   * 
-   * NOTE: The headline is separate from the previewedHeadline because when
-   *       ListView is updated the selected headline observable will change.
-   *       While the previewedHeadline will remain unchanged, but comparing
-   *       them will return true.
-   */
+  /** Whenever the currently selected Headline changes, update the preview.
+    *
+    * NOTE: The headline is separate from the previewedHeadline because when
+    *       ListView is updated the selected headline observable will change.
+    *       While the previewedHeadline will remain unchanged, but comparing
+    *       them will return true.
+    */
   headline onChange { (_, _, h) =>
     if (h != null && !h.equals(previewedHeadline)) {
       val template =
@@ -73,27 +68,24 @@ class Preview(val headline: ObjectProperty[Headline]) extends WebView {
     }
   }
 
-  /**
-   * When the HTML generated for the preview is done being loaded into the
-   * browser engine, go through and fix-up all the anchor links.
-   */
+  /** When the HTML generated for the preview is done being loaded into the
+    * browser engine, go through and fix-up all the anchor links.
+    */
   engine.delegate.getLoadWorker.stateProperty addListener {
     (_, _, state) => fixLinks(new Worker.State(state))
   }
 
-  /**
-   * Custom object users for handling anchor clicks so they are opened in
-   * an external browser instead of relocating the preview.
-   */
+  /** Custom object users for handling anchor clicks so they are opened in
+    * an external browser instead of relocating the preview.
+    */
   class UrlClicker() {
     def open(url: String) = Desktop.getDesktop browse new URI(url)
   }
 
-  /**
-   * Loop over all the links in the preview and change them so that - when
-   * clicked - they open an external browser instead of changing the preview
-   * HREF location.
-   */
+  /** Loop over all the links in the preview and change them so that - when
+    * clicked - they open an external browser instead of changing the preview
+    * HREF location.
+    */
   def fixLinks(state: Worker.State): Unit = {
     if (state == Worker.State.Succeeded) {
       val doc = engine.getDocument
@@ -105,10 +97,10 @@ class Preview(val headline: ObjectProperty[Headline]) extends WebView {
           case a: HTMLAnchorElement =>
             Option(a.getHref) foreach { href =>
               val attr = doc.createAttribute("onclick")
-  
+
               // set the link to open when clicked
               attr.setValue(s"rss.open('$href'); return false;")
-  
+
               // add the attribute or override the existing one
               a.getAttributes.setNamedItem(attr)
             }

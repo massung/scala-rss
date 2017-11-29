@@ -5,16 +5,14 @@ import monix.reactive._
 import monix.reactive.observers._
 import monix.reactive.subjects._
 
-/**
- * The archive is a state subject. It can have headlines pushed onto it,
- * or popped (undone). Each action updates the state of the observable.
- */
+/** The archive is a state subject. It can have headlines pushed onto it,
+  * or popped (undone). Each action updates the state of the observable.
+  */
 class Archive extends Observer[Archive.Action] {
   import Scheduler.Implicits.global
 
-  /**
-   * The actor receives messages that then update the state.
-   */
+  /** The actor receives messages that then update the state.
+    */
   private val actor = PublishSubject[Archive.Action]()
 
   // Observer contract methods.
@@ -22,9 +20,8 @@ class Archive extends Observer[Archive.Action] {
   def onComplete = actor.onComplete
   def onError(ex: Throwable) = actor.onError(ex)
 
-  /**
-   * Collect all the actions and update the state.
-   */
+  /** Collect all the actions and update the state.
+    */
   private val observable = List.empty[Headline] +: actor.scan(List.empty[Headline]) {
     (t, a) => a match {
       case Archive.Push(h) => h :: t
@@ -33,30 +30,25 @@ class Archive extends Observer[Archive.Action] {
   }
 }
 
-/**
- * Implicit conversion from Archive to Observable.
- */
+/** Implicit conversion from Archive to Observable.
+  */
 object Archive {
   import scala.language.higherKinds
   import scala.language.implicitConversions
 
-  /**
-   * Actions taken on an archive must extend this trait.
-   */
+  /** Actions taken on an archive must extend this trait.
+    */
   sealed trait Action
 
-  /**
-   * Push a headline into the archive.
-   */
+  /** Push a headline into the archive.
+    */
   final case class Push(h: Headline) extends Action
 
-  /**
-   * Pop the last headline pushed onto the archive.
-   */
+  /** Pop the last headline pushed onto the archive.
+    */
   final case object Undo extends Action
 
-  /**
-   * Convert an Archive into an Observable.
-   */
+  /** Convert an Archive into an Observable.
+    */
   implicit def toObservable[List[Headline]](a: Archive) = a.observable
 }

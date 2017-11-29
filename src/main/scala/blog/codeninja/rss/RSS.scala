@@ -12,27 +12,23 @@ import scalafx.stage.WindowEvent
 object RSS extends JFXApp {
   import Scheduler.Implicits.global
 
-  /**
-   * Every time the preferences are updated, cancel the current download
-   * tasks and create a new Aggregator.
-   */
+  /** Every time the preferences are updated, cancel the current download
+    * tasks and create a new Aggregator.
+    */
   val aggregator = Config.prefs.scan(new Aggregator(new Config.Prefs)) {
     (agg, prefs) => agg.cancel; new Aggregator(prefs)
   }
 
-  /**
-   * Archive of headlines.
-   */
+  /** Archive of headlines.
+    */
   val archive = new Archive
 
-  /**
-   * Nicely quit the preferences watcher thread.
-   */
+  /** Nicely quit the preferences watcher thread.
+    */
   override def stopApp = Config.watcher.cancel
 
-  /**
-   * Create the primary stage.
-   */
+  /** Create the primary stage.
+    */
   stage = new JFXApp.PrimaryStage {
     title = "Scala RSS Reader"
     minWidth = 560
