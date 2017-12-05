@@ -5,8 +5,9 @@ import java.net.URI
 import monix.eval._
 import monix.execution._
 import netscape.javascript.JSObject
-import org.w3c.dom.html.HTMLAnchorElement
+import org.w3c.dom.html.{HTMLAnchorElement, HTMLImageElement}
 import scala.io.Source
+import scala.util.Try
 import scalafx.Includes._
 import scalafx.beans.property.ObjectProperty
 import scalafx.concurrent.Worker
@@ -89,11 +90,20 @@ class Preview(val headline: ObjectProperty[Headline]) extends WebView {
   def fixLinks(state: Worker.State): Unit = {
     if (state == Worker.State.Succeeded) {
       val doc = engine.getDocument
-      val nodes = doc.getElementsByTagName("a")
+      val images = doc.getElementsByTagName("img")
+      val anchors = doc.getElementsByTagName("a")
+      
+      // loop over images and remove floating attributes
+      for (i <- 0 until images.getLength) {
+        Option(images.item(i)) collect {
+          case i: HTMLImageElement =>
+            Option(i.getAttributes.getNamedItem("align")) foreach (_.setNodeValue("middle"))
+        }
+      }
 
       // loop over all the anchors and add click event handlers
-      for (i <- 0 until nodes.getLength) {
-        Option(nodes.item(i)) collect {
+      for (i <- 0 until anchors.getLength) {
+        Option(anchors.item(i)) collect {
           case a: HTMLAnchorElement =>
             Option(a.getHref) foreach { href =>
               val attr = doc.createAttribute("onclick")
