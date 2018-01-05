@@ -19,7 +19,7 @@ class Preview(val headline: ObjectProperty[Headline]) extends WebView {
 
   /** The CSS styles to be embedded in every preview.
     */
-  val styles = Source.fromFile(getClass.getResource("/preview.css").toURI).mkString
+  val styles = Source.fromInputStream(getClass.getResourceAsStream("/preview.css")).mkString
 
   /** The styles to use for the actual FX control.
     */
@@ -92,7 +92,7 @@ class Preview(val headline: ObjectProperty[Headline]) extends WebView {
       val doc = engine.getDocument
       val images = doc.getElementsByTagName("img")
       val anchors = doc.getElementsByTagName("a")
-      
+
       // loop over images and remove floating attributes
       for (i <- 0 until images.getLength) {
         Option(images.item(i)) collect {

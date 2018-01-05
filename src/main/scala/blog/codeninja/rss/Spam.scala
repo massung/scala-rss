@@ -10,7 +10,7 @@ import scala.io.Source
 /** Shared functions and constants for any BayesFilter.
   */
 object SpamFilter {
-  val stopWords = Source.fromFile(getClass.getResource("/filter/stopwords.txt").toURI)
+  val stopWords = Source.fromInputStream(getClass.getResourceAsStream("/filter/stopwords.txt"))
     .getLines
     .toSet
 
