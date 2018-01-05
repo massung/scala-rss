@@ -72,8 +72,16 @@ class Preview(val headline: ObjectProperty[Headline]) extends WebView {
   /** When the HTML generated for the preview is done being loaded into the
     * browser engine, go through and fix-up all the anchor links.
     */
-  engine.delegate.getLoadWorker.stateProperty addListener {
-    (_, _, state) => fixLinks(new Worker.State(state))
+  engine.delegate.getLoadWorker.stateProperty addListener { (_, _, state) =>
+    if (new Worker.State(state) == Worker.State.Succeeded) {
+      fixImages()
+      fixLinks()
+
+      // create the object that opens links in browser
+      engine.executeScript("window") match {
+        case window: JSObject => window.setMember("rss", new UrlClicker)
+      }
+    }
   }
 
   /** Custom object users for handling anchor clicks so they are opened in
@@ -83,43 +91,47 @@ class Preview(val headline: ObjectProperty[Headline]) extends WebView {
     def open(url: String) = Desktop.getDesktop browse new URI(url)
   }
 
+  /**
+    */
+  def fixImages(): Unit = {
+    val doc = engine.getDocument
+    val images = doc.getElementsByTagName("img")
+
+    for (i <- 0 until images.getLength) {
+      Option(images.item(i)) collect {
+        case i: HTMLImageElement =>
+          i.setAttribute("align", "middle")
+
+          // nuke images that point to feedburner
+          if (i.getSrc contains "//feeds.feedburner.com") {
+            i setSrc ""
+            i setWidth "0"
+            i setHeight "0"
+          }
+      }
+    }
+  }
+
   /** Loop over all the links in the preview and change them so that - when
     * clicked - they open an external browser instead of changing the preview
     * HREF location.
     */
-  def fixLinks(state: Worker.State): Unit = {
-    if (state == Worker.State.Succeeded) {
-      val doc = engine.getDocument
-      val images = doc.getElementsByTagName("img")
-      val anchors = doc.getElementsByTagName("a")
+  def fixLinks(): Unit = {
+    val doc = engine.getDocument
+    val anchors = doc.getElementsByTagName("a")
 
-      // loop over images and remove floating attributes
-      for (i <- 0 until images.getLength) {
-        Option(images.item(i)) collect {
-          case i: HTMLImageElement =>
-            Option(i.getAttributes.getNamedItem("align")) foreach (_.setNodeValue("middle"))
-        }
-      }
+    for (i <- 0 until anchors.getLength) {
+      Option(anchors.item(i)) collect {
+        case a: HTMLAnchorElement =>
+          Option(a.getHref) foreach { href =>
+            val attr = doc.createAttribute("onclick")
 
-      // loop over all the anchors and add click event handlers
-      for (i <- 0 until anchors.getLength) {
-        Option(anchors.item(i)) collect {
-          case a: HTMLAnchorElement =>
-            Option(a.getHref) foreach { href =>
-              val attr = doc.createAttribute("onclick")
+            // set the link to open when clicked
+            attr.setValue(s"rss.open('$href'); return false;")
 
-              // set the link to open when clicked
-              attr.setValue(s"rss.open('$href'); return false;")
-
-              // add the attribute or override the existing one
-              a.getAttributes.setNamedItem(attr)
-            }
-        }
-      }
-
-      // create the object that opens links in browser
-      engine.executeScript("window") match {
-        case window: JSObject => window.setMember("rss", new UrlClicker)
+            // add the attribute or override the existing one
+            a.getAttributes.setNamedItem(attr)
+          }
       }
     }
   }
