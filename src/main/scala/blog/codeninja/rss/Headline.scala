@@ -84,9 +84,15 @@ class Headline(val feed: SyndFeed, val entry: SyndEntry) extends Comparable[Head
       case (a, b)                => a == b
     })
 
+
   /** Launch the default web browser to the Headline link.
     */
   def open = Desktop.getDesktop browse new URI(entry.getLink)
+
+  /** True if this headline is the same as another.
+    */
+  def matchesHeadline(h: Headline) =
+    (entry.getUri == h.entry.getUri) || (entry.getLink == h.entry.getLink)
 
   /** Show the age and title of the Headline.
     */
@@ -96,7 +102,7 @@ class Headline(val feed: SyndFeed, val entry: SyndEntry) extends Comparable[Head
     */
   override def equals(obj: Any): Boolean =
     obj match {
-      case h: Headline => entry.getLink == h.entry.getLink
+      case h: Headline => matchesHeadline(h)
       case s: String   => entry.getLink == s
       case _           => false
     }

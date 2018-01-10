@@ -42,6 +42,7 @@ class Aggregator(prefs: Config.Prefs) {
     */
   val headlines = feeds.map(_.values.flatMap(extractHeadlines _).toList.sorted)
     .onErrorRestartUnlimited
+    .map(_.distinct)
     .map(_ filterNot (isOld _))
     .map(_ filterNot (isHidden _))
 
