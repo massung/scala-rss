@@ -16,6 +16,18 @@ import scribe._
 object Config {
   implicit val formats: Formats = DefaultFormats
 
+  /** Options saved to a JSON file.
+    */
+  case class Prefs(
+    val urls: List[String] = List.empty,
+    val ageLimit: Option[String] = None,
+    val filters: List[String] = List.empty,
+  ) {
+    val age = ageLimit flatMap {
+      s => Option(Period.parse(s, ageParser)) map (_.toStandardDuration)
+    }
+  }
+
   /** Whenever the preferences are loaded, send them to this observable.
     */
   val prefs = PublishSubject[Prefs]()
@@ -29,17 +41,6 @@ object Config {
     .appendMinutes().appendSuffix("m")
     .appendSeconds().appendSuffix("s")
     .toFormatter()
-
-  // definition of the preferences file
-  case class Prefs(
-    val urls: List[String] = List.empty,
-    val ageLimit: Option[String] = None,
-    val filters: List[String] = List.empty,
-  ) {
-    val age = ageLimit flatMap {
-      s => Option(Period.parse(s, ageParser)) map (_.toStandardDuration)
-    }
-  }
 
   /** Where are the config files located.
     */
