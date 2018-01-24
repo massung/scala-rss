@@ -103,7 +103,7 @@ class Preview(val headline: ObjectProperty[Headline]) extends WebView {
           i.setAttribute("align", "middle")
 
           // nuke images that point to feedburner
-          if (i.getSrc contains "//feeds.feedburner.com") {
+          if (Option(i.getSrc) map (_ contains "//feeds.feedburner.com") getOrElse false) {
             i setSrc ""
             i setWidth "0"
             i setHeight "0"
